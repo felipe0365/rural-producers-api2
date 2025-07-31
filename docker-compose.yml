@@ -35,7 +35,15 @@ services:
     networks:
       - rural-net
     healthcheck:
-      test: ['CMD-SHELL', 'curl', '-f', 'http://localhost:3000/healthcheck']
+      test:
+        [
+          'CMD-SHELL',
+          'wget',
+          '--no-verbose',
+          '--tries=1',
+          '--spider',
+          'http://localhost:3000/healthcheck',
+        ]
       interval: 10s
       timeout: 5s
       retries: 3
