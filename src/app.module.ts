@@ -7,6 +7,7 @@ import { ProducersModule } from './producers/producers.module';
 import { FarmsModule } from './farms/farms.module';
 import { CultureModule } from './culture/culture.module';
 import { PlantedCropsModule } from './planted-crops/planted-crops.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { PlantedCropsModule } from './planted-crops/planted-crops.module';
     FarmsModule,
     CultureModule,
     PlantedCropsModule,
+    DashboardModule,
   ],
   controllers: [AppController],
   providers: [AppService],
