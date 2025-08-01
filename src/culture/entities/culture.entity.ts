@@ -1,3 +1,4 @@
+import { PlantedCrop } from 'src/planted-crops/entities/planted-crop.entity'
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 
 @Entity('cultures')

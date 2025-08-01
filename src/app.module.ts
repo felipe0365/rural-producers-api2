@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProducersModule } from './producers/producers.module';
 import { FarmsModule } from './farms/farms.module';
 import { CultureModule } from './culture/culture.module';
+import { PlantedCropsModule } from './planted-crops/planted-crops.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { CultureModule } from './culture/culture.module';
     ProducersModule,
     FarmsModule,
     CultureModule,
+    PlantedCropsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

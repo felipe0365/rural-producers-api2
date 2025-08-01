@@ -1,5 +1,6 @@
+import { PlantedCrop } from 'src/planted-crops/entities/planted-crop.entity'
 import { Producer } from 'src/producers/entities/producer.entity'
-import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 
 @Entity('farms')
 export class Farm {
@@ -26,4 +27,9 @@ export class Farm {
 
   @ManyToOne(() => Producer, (producer) => producer.farms)
   producer: Producer
+
+  @OneToMany(() => PlantedCrop, (plantedCrop) => plantedCrop.farm, {
+    cascade: true,
+  })
+  plantedCrops: PlantedCrop[]
 }
