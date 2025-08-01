@@ -1,4 +1,5 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm'
+import { Farm } from 'src/farms/entities/farm.entity'
+import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 
 export enum DocumentType {
   CPF = 'CPF',
@@ -10,12 +11,17 @@ export class Producer {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @Column({ unique: true })
+  @Column({ type: 'varchar', length: 255, nullable: false })
+  producerName: string
+
+  @Column({ unique: true, nullable: false })
   document: string
 
-  @Column({ type: 'enum', enum: DocumentType })
+  @Column({ type: 'enum', enum: DocumentType, nullable: false })
   documentType: DocumentType
 
-  @Column()
-  producerName: string
+  @OneToMany(() => Farm, (farm) => farm.producer, {
+    cascade: true,
+  })
+  farms: Farm[]
 }
