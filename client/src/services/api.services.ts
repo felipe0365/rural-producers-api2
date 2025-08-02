@@ -24,6 +24,6 @@ export interface DashboardData {
 }
 
 export const getDashboardData = async (): Promise<DashboardData> => {
-  const response = await apiClient.get('/dashboard')
+  const response = await apiClient.get('/api/dashboard')
   return response.data
 }
