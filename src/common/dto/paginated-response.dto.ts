@@ -1,5 +1,6 @@
 export class PaginatedResponseDto<T> {
   data: T[]
+
   meta: {
     page: number
     limit: number
@@ -20,4 +21,4 @@ export class PaginatedResponseDto<T> {
       hasPrev: page > 1,
     }
   }
-} 
+}

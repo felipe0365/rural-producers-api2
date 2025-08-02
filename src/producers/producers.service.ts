@@ -48,19 +48,14 @@ export class ProducersService {
     }
   }
 
-  async findAll(
-    paginationDto: PaginationDto,
-    filterDto: FilterProducerDto,
-  ): Promise<PaginatedResponseDto<Producer>> {
+  async findAll(paginationDto: PaginationDto, filterDto: FilterProducerDto): Promise<PaginatedResponseDto<Producer>> {
     this.logger.log('Buscando produtores com paginação e filtros')
-    
+
     const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'DESC' } = paginationDto
     const skip = (page - 1) * limit
 
-    // Construir query builder
     const queryBuilder = this.producerRepository.createQueryBuilder('producer')
 
-    // Aplicar filtros
     if (filterDto.producerName) {
       queryBuilder.andWhere('producer.producerName ILIKE :producerName', {
         producerName: `%${filterDto.producerName}%`,
@@ -79,13 +74,10 @@ export class ProducersService {
       })
     }
 
-    // Aplicar ordenação
     queryBuilder.orderBy(`producer.${sortBy}`, sortOrder)
 
-    // Aplicar paginação
     queryBuilder.skip(skip).take(limit)
 
-    // Executar query
     const [data, total] = await queryBuilder.getManyAndCount()
 
     this.logger.log(`Encontrados ${total} produtores, retornando página ${page} com ${data.length} registros`)

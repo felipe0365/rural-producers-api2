@@ -75,16 +75,15 @@ export class PlantedCropsService {
     filterDto: FilterPlantedCropDto,
   ): Promise<PaginatedResponseDto<PlantedCrop>> {
     this.logger.log('Buscando plantios com paginação e filtros')
-    
+
     const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'DESC' } = paginationDto
     const skip = (page - 1) * limit
 
-    // Construir query builder
-    const queryBuilder = this.plantedCropRepository.createQueryBuilder('plantedCrop')
+    const queryBuilder = this.plantedCropRepository
+      .createQueryBuilder('plantedCrop')
       .leftJoinAndSelect('plantedCrop.farm', 'farm')
       .leftJoinAndSelect('plantedCrop.culture', 'culture')
 
-    // Aplicar filtros
     if (filterDto.farmId) {
       queryBuilder.andWhere('plantedCrop.farmId = :farmId', {
         farmId: filterDto.farmId,
@@ -109,13 +108,10 @@ export class PlantedCropsService {
       })
     }
 
-    // Aplicar ordenação
     queryBuilder.orderBy(`plantedCrop.${sortBy}`, sortOrder)
 
-    // Aplicar paginação
     queryBuilder.skip(skip).take(limit)
 
-    // Executar query
     const [data, total] = await queryBuilder.getManyAndCount()
 
     this.logger.log(`Encontrados ${total} plantios, retornando página ${page} com ${data.length} registros`)
