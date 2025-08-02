@@ -18,16 +18,33 @@ import { DashboardModule } from './dashboard/dashboard.module'
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
-      useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
-        host: configService.get<string>('DB_HOST'),
-        port: configService.get<number>('DB_PORT'),
-        username: configService.get<string>('DB_USERNAME'),
-        password: configService.get<string>('DB_PASSWORD'),
-        database: configService.get<string>('DB_DATABASE'),
-        autoLoadEntities: true,
-        synchronize: true,
-      }),
+      useFactory: (configService: ConfigService) => {
+        const dbHost = configService.get<string>('DB_HOST')
+        const dbUsername = configService.get<string>('DB_USERNAME')
+
+        // Se não houver configuração de PostgreSQL, usar SQLite
+        if (!dbHost || !dbUsername) {
+          return {
+            type: 'sqlite',
+            database: ':memory:',
+            autoLoadEntities: true,
+            synchronize: true,
+            dropSchema: true,
+          }
+        }
+
+        // Usar PostgreSQL se configurado
+        return {
+          type: 'postgres',
+          host: dbHost,
+          port: configService.get<number>('DB_PORT'),
+          username: dbUsername,
+          password: configService.get<string>('DB_PASSWORD'),
+          database: configService.get<string>('DB_DATABASE'),
+          autoLoadEntities: true,
+          synchronize: true,
+        }
+      },
     }),
     ProducersModule,
     FarmsModule,

@@ -1,4 +1,5 @@
-import { Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { Injectable, Logger, NotFoundException, BadRequestException } from '@nestjs/common'
+import { DomainException } from '../common/exceptions/domain.exception'
 import { CreateFarmDto } from './dto/create-farm.dto'
 import { UpdateFarmDto } from './dto/update-farm.dto'
 import { Farm } from './entities/farm.entity'
