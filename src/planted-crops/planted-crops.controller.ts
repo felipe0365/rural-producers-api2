@@ -1,7 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe } from '@nestjs/common'
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query } from '@nestjs/common'
 import { PlantedCropsService } from './planted-crops.service'
 import { CreatePlantedCropDto } from './dto/create-planted-crop.dto'
 import { UpdatePlantedCropDto } from './dto/update-planted-crop.dto'
+import { PaginationDto } from '../common/dto/pagination.dto'
+import { FilterPlantedCropDto } from './dto/filter-planted-crop.dto'
+import { PaginatedResponseDto } from '../common/dto/paginated-response.dto'
+import { PlantedCrop } from './entities/planted-crop.entity'
 
 @Controller('planted-crops')
 export class PlantedCropsController {
@@ -13,8 +17,11 @@ export class PlantedCropsController {
   }
 
   @Get()
-  findAll() {
-    return this.plantedCropsService.findAll()
+  async findAll(
+    @Query() paginationDto: PaginationDto,
+    @Query() filterDto: FilterPlantedCropDto,
+  ): Promise<PaginatedResponseDto<PlantedCrop>> {
+    return this.plantedCropsService.findAll(paginationDto, filterDto)
   }
 
   @Get(':id')

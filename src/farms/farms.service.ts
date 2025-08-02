@@ -6,6 +6,9 @@ import { Farm } from './entities/farm.entity'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { Producer } from 'src/producers/entities/producer.entity'
+import { PaginationDto } from '../common/dto/pagination.dto'
+import { FilterFarmDto } from './dto/filter-farm.dto'
+import { PaginatedResponseDto } from '../common/dto/paginated-response.dto'
 
 @Injectable()
 export class FarmsService {
@@ -50,11 +53,56 @@ export class FarmsService {
     }
   }
 
-  async findAll(): Promise<Farm[]> {
-    this.logger.log('Buscando todas as fazendas')
-    return this.farmRepository.find({
-      relations: ['producer'],
-    })
+  async findAll(
+    paginationDto: PaginationDto,
+    filterDto: FilterFarmDto,
+  ): Promise<PaginatedResponseDto<Farm>> {
+    this.logger.log('Buscando fazendas com paginação e filtros')
+    
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'DESC' } = paginationDto
+    const skip = (page - 1) * limit
+
+    // Construir query builder
+    const queryBuilder = this.farmRepository.createQueryBuilder('farm')
+      .leftJoinAndSelect('farm.producer', 'producer')
+
+    // Aplicar filtros
+    if (filterDto.farmName) {
+      queryBuilder.andWhere('farm.farmName ILIKE :farmName', {
+        farmName: `%${filterDto.farmName}%`,
+      })
+    }
+
+    if (filterDto.producerId) {
+      queryBuilder.andWhere('farm.producerId = :producerId', {
+        producerId: filterDto.producerId,
+      })
+    }
+
+    if (filterDto.minArea) {
+      queryBuilder.andWhere('farm.area >= :minArea', {
+        minArea: filterDto.minArea,
+      })
+    }
+
+    if (filterDto.maxArea) {
+      queryBuilder.andWhere('farm.area <= :maxArea', {
+        maxArea: filterDto.maxArea,
+      })
+    }
+
+    // Aplicar ordenação
+    queryBuilder.orderBy(`farm.${sortBy}`, sortOrder)
+
+    // Aplicar paginação
+    queryBuilder.skip(skip).take(limit)
+
+    // Executar query
+    const [data, total] = await queryBuilder.getManyAndCount()
+
+    this.logger.log(`Encontradas ${total} fazendas, retornando página ${page} com ${data.length} registros`)
+
+    return new PaginatedResponseDto(data, page, limit, total)
   }
 
   async findOne(id: string): Promise<Farm> {

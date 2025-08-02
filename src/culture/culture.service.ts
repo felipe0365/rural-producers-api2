@@ -4,6 +4,9 @@ import { UpdateCultureDto } from './dto/update-culture.dto'
 import { Culture } from './entities/culture.entity'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
+import { PaginationDto } from '../common/dto/pagination.dto'
+import { FilterCultureDto } from './dto/filter-culture.dto'
+import { PaginatedResponseDto } from '../common/dto/paginated-response.dto'
 
 @Injectable()
 export class CultureService {
@@ -38,9 +41,37 @@ export class CultureService {
     }
   }
 
-  async findAll(): Promise<Culture[]> {
-    this.logger.log('Buscando todas as culturas')
-    return this.cultureRepository.find()
+  async findAll(
+    paginationDto: PaginationDto,
+    filterDto: FilterCultureDto,
+  ): Promise<PaginatedResponseDto<Culture>> {
+    this.logger.log('Buscando culturas com paginação e filtros')
+    
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'DESC' } = paginationDto
+    const skip = (page - 1) * limit
+
+    // Construir query builder
+    const queryBuilder = this.cultureRepository.createQueryBuilder('culture')
+
+    // Aplicar filtros
+    if (filterDto.cultureName) {
+      queryBuilder.andWhere('culture.name ILIKE :cultureName', {
+        cultureName: `%${filterDto.cultureName}%`,
+      })
+    }
+
+    // Aplicar ordenação
+    queryBuilder.orderBy(`culture.${sortBy}`, sortOrder)
+
+    // Aplicar paginação
+    queryBuilder.skip(skip).take(limit)
+
+    // Executar query
+    const [data, total] = await queryBuilder.getManyAndCount()
+
+    this.logger.log(`Encontradas ${total} culturas, retornando página ${page} com ${data.length} registros`)
+
+    return new PaginatedResponseDto(data, page, limit, total)
   }
 
   async findOne(id: string): Promise<Culture> {

@@ -2,7 +2,6 @@ import { Injectable, Logger } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Culture } from 'src/culture/entities/culture.entity'
 import { Farm } from 'src/farms/entities/farm.entity'
-import { PlantedCrop } from 'src/planted-crops/entities/planted-crop.entity'
 import { Repository } from 'typeorm'
 import { DashboardResponseDto } from './dto/dashboard-response.dto'
 

@@ -1,7 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe } from '@nestjs/common'
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query } from '@nestjs/common'
 import { CultureService } from './culture.service'
 import { CreateCultureDto } from './dto/create-culture.dto'
 import { UpdateCultureDto } from './dto/update-culture.dto'
+import { PaginationDto } from '../common/dto/pagination.dto'
+import { FilterCultureDto } from './dto/filter-culture.dto'
+import { PaginatedResponseDto } from '../common/dto/paginated-response.dto'
+import { Culture } from './entities/culture.entity'
 
 @Controller('culture')
 export class CultureController {
@@ -13,8 +17,11 @@ export class CultureController {
   }
 
   @Get()
-  findAll() {
-    return this.cultureService.findAll()
+  async findAll(
+    @Query() paginationDto: PaginationDto,
+    @Query() filterDto: FilterCultureDto,
+  ): Promise<PaginatedResponseDto<Culture>> {
+    return this.cultureService.findAll(paginationDto, filterDto)
   }
 
   @Get(':id')

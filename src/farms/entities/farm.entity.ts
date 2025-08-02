@@ -1,5 +1,5 @@
 import { PlantedCrop } from 'src/planted-crops/entities/planted-crop.entity'
-import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
+import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm'
 
 @Entity('farms')
 export class Farm {
@@ -31,4 +31,10 @@ export class Farm {
     cascade: true,
   })
   plantedCrops: PlantedCrop[]
+
+  @CreateDateColumn()
+  createdAt: Date
+
+  @UpdateDateColumn()
+  updatedAt: Date
 }

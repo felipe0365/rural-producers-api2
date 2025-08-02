@@ -1,10 +1,13 @@
 import { ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { Repository, Like, ILike } from 'typeorm'
 import { CreateProducerDto } from './dto/create-producer.dto'
 import { UpdateProducerDto } from './dto/update-producer.dto'
 import { Producer } from './entities/producer.entity'
 import { cpf, cnpj } from 'cpf-cnpj-validator'
+import { PaginationDto } from '../common/dto/pagination.dto'
+import { FilterProducerDto } from './dto/filter-producer.dto'
+import { PaginatedResponseDto } from '../common/dto/paginated-response.dto'
 
 @Injectable()
 export class ProducersService {
@@ -45,9 +48,49 @@ export class ProducersService {
     }
   }
 
-  async findAll(): Promise<Producer[]> {
-    this.logger.log('Buscando todos os produtores')
-    return this.producerRepository.find()
+  async findAll(
+    paginationDto: PaginationDto,
+    filterDto: FilterProducerDto,
+  ): Promise<PaginatedResponseDto<Producer>> {
+    this.logger.log('Buscando produtores com paginação e filtros')
+    
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'DESC' } = paginationDto
+    const skip = (page - 1) * limit
+
+    // Construir query builder
+    const queryBuilder = this.producerRepository.createQueryBuilder('producer')
+
+    // Aplicar filtros
+    if (filterDto.producerName) {
+      queryBuilder.andWhere('producer.producerName ILIKE :producerName', {
+        producerName: `%${filterDto.producerName}%`,
+      })
+    }
+
+    if (filterDto.document) {
+      queryBuilder.andWhere('producer.document ILIKE :document', {
+        document: `%${filterDto.document}%`,
+      })
+    }
+
+    if (filterDto.documentType) {
+      queryBuilder.andWhere('producer.documentType = :documentType', {
+        documentType: filterDto.documentType,
+      })
+    }
+
+    // Aplicar ordenação
+    queryBuilder.orderBy(`producer.${sortBy}`, sortOrder)
+
+    // Aplicar paginação
+    queryBuilder.skip(skip).take(limit)
+
+    // Executar query
+    const [data, total] = await queryBuilder.getManyAndCount()
+
+    this.logger.log(`Encontrados ${total} produtores, retornando página ${page} com ${data.length} registros`)
+
+    return new PaginatedResponseDto(data, page, limit, total)
   }
 
   async findOne(id: string): Promise<Producer> {

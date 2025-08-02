@@ -1,7 +1,11 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe } from '@nestjs/common'
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseUUIDPipe, Query } from '@nestjs/common'
 import { ProducersService } from './producers.service'
 import { CreateProducerDto } from './dto/create-producer.dto'
 import { UpdateProducerDto } from './dto/update-producer.dto'
+import { PaginationDto } from '../common/dto/pagination.dto'
+import { FilterProducerDto } from './dto/filter-producer.dto'
+import { PaginatedResponseDto } from '../common/dto/paginated-response.dto'
+import { Producer } from './entities/producer.entity'
 
 @Controller('producers')
 export class ProducersController {
@@ -13,8 +17,11 @@ export class ProducersController {
   }
 
   @Get()
-  findAll() {
-    return this.producersService.findAll()
+  async findAll(
+    @Query() paginationDto: PaginationDto,
+    @Query() filterDto: FilterProducerDto,
+  ): Promise<PaginatedResponseDto<Producer>> {
+    return this.producersService.findAll(paginationDto, filterDto)
   }
 
   @Get(':id')

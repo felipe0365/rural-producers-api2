@@ -6,6 +6,9 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { Farm } from 'src/farms/entities/farm.entity'
 import { Culture } from 'src/culture/entities/culture.entity'
+import { PaginationDto } from '../common/dto/pagination.dto'
+import { FilterPlantedCropDto } from './dto/filter-planted-crop.dto'
+import { PaginatedResponseDto } from '../common/dto/paginated-response.dto'
 
 @Injectable()
 export class PlantedCropsService {
@@ -67,9 +70,57 @@ export class PlantedCropsService {
     }
   }
 
-  async findAll(): Promise<PlantedCrop[]> {
-    this.logger.log('Buscando todos os plantios')
-    return this.plantedCropRepository.find()
+  async findAll(
+    paginationDto: PaginationDto,
+    filterDto: FilterPlantedCropDto,
+  ): Promise<PaginatedResponseDto<PlantedCrop>> {
+    this.logger.log('Buscando plantios com paginação e filtros')
+    
+    const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'DESC' } = paginationDto
+    const skip = (page - 1) * limit
+
+    // Construir query builder
+    const queryBuilder = this.plantedCropRepository.createQueryBuilder('plantedCrop')
+      .leftJoinAndSelect('plantedCrop.farm', 'farm')
+      .leftJoinAndSelect('plantedCrop.culture', 'culture')
+
+    // Aplicar filtros
+    if (filterDto.farmId) {
+      queryBuilder.andWhere('plantedCrop.farmId = :farmId', {
+        farmId: filterDto.farmId,
+      })
+    }
+
+    if (filterDto.cultureId) {
+      queryBuilder.andWhere('plantedCrop.cultureId = :cultureId', {
+        cultureId: filterDto.cultureId,
+      })
+    }
+
+    if (filterDto.minArea) {
+      queryBuilder.andWhere('plantedCrop.plantedArea >= :minArea', {
+        minArea: filterDto.minArea,
+      })
+    }
+
+    if (filterDto.maxArea) {
+      queryBuilder.andWhere('plantedCrop.plantedArea <= :maxArea', {
+        maxArea: filterDto.maxArea,
+      })
+    }
+
+    // Aplicar ordenação
+    queryBuilder.orderBy(`plantedCrop.${sortBy}`, sortOrder)
+
+    // Aplicar paginação
+    queryBuilder.skip(skip).take(limit)
+
+    // Executar query
+    const [data, total] = await queryBuilder.getManyAndCount()
+
+    this.logger.log(`Encontrados ${total} plantios, retornando página ${page} com ${data.length} registros`)
+
+    return new PaginatedResponseDto(data, page, limit, total)
   }
 
   async findOne(id: string): Promise<PlantedCrop> {
