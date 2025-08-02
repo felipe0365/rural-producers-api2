@@ -1,4 +1,3 @@
-import { Farm } from 'src/farms/entities/farm.entity'
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 
 export enum DocumentType {
@@ -17,11 +16,11 @@ export class Producer {
   @Column({ unique: true, nullable: false })
   document: string
 
-  @Column({ type: 'enum', enum: DocumentType, nullable: false })
+  @Column({ type: 'varchar', length: 10, nullable: false })
   documentType: DocumentType
 
-  @OneToMany(() => Farm, (farm) => farm.producer, {
+  @OneToMany('Farm', 'producer', {
     cascade: true,
   })
-  farms: Farm[]
+  farms: any[]
 }

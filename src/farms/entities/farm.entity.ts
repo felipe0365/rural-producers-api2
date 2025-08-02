@@ -1,5 +1,4 @@
 import { PlantedCrop } from 'src/planted-crops/entities/planted-crop.entity'
-import { Producer } from 'src/producers/entities/producer.entity'
 import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from 'typeorm'
 
 @Entity('farms')
@@ -25,8 +24,8 @@ export class Farm {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   vegetationArea: number
 
-  @ManyToOne(() => Producer, (producer) => producer.farms)
-  producer: Producer
+  @ManyToOne('Producer', 'farms')
+  producer: any
 
   @OneToMany(() => PlantedCrop, (plantedCrop) => plantedCrop.farm, {
     cascade: true,

@@ -1,4 +1,3 @@
-// Mock para resolver dependências circulares
 jest.mock('planted-crops/entities/planted-crop.entity', () => {
   return {
     PlantedCrop: jest.fn().mockImplementation(() => ({

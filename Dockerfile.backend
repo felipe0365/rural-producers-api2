@@ -2,23 +2,16 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Instalar dependências do sistema
 RUN apk add --no-cache wget
 
-# Copiar arquivos de dependências
 COPY package*.json ./
 
-# Instalar dependências
 RUN npm ci
 
-# Copiar código fonte
 COPY . .
 
-# Construir a aplicação
 RUN npm run build
 
-# Expor porta
 EXPOSE 3000
 
-# Comando para iniciar
 CMD ["npm", "run", "start:prod"]
