@@ -13,7 +13,7 @@ interface PieChartCardProps {
   emptyMessage?: string
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D']
+const COLORS = ['#4caf50', '#8bc34a', '#66bb6a', '#81c784', '#a5d6a7', '#c8e6c9', '#2e7d32', '#388e3c']
 
 const PieChartCard: React.FC<PieChartCardProps> = ({ title, data, emptyMessage = 'Nenhum dado disponível' }) => {
   if (!data || data.length === 0) {

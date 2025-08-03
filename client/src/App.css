@@ -11,7 +11,8 @@ body {
     'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background-color: #f0f2f5;
+  background: linear-gradient(135deg, #f0f8f0 0%, #e8f5e8 100%);
+  background-attachment: fixed;
 }
 
 .ant-layout {
@@ -20,6 +21,8 @@ body {
 
 .ant-layout-sider {
   box-shadow: 2px 0 8px 0 rgba(29, 35, 41, 0.05);
+  background: linear-gradient(180deg, #2e7d32 0%, #388e3c 100%);
+  border-right: 1px solid #1b5e20;
 }
 
 .ant-layout-header {
@@ -42,13 +45,20 @@ body {
   padding: 24px;
   border-radius: 8px;
   background: #fff;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.1);
+  border: 1px solid #e8f5e8;
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px 0 rgba(0, 0, 0, 0.15);
 }
 
 .stat-card h2 {
   font-size: 2rem;
   font-weight: 600;
-  color: #1890ff;
+  color: #2e7d32;
   margin-bottom: 8px;
 }
 
@@ -61,8 +71,14 @@ body {
   background: #fff;
   border-radius: 8px;
   padding: 16px;
-  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+  box-shadow: 0 2px 8px 0 rgba(0, 0, 0, 0.1);
   height: 100%;
+  border: 1px solid #e8f5e8;
+}
+
+.chart-card .ant-card-head {
+  background: linear-gradient(90deg, #f1f8e9 0%, #e8f5e8 100%);
+  border-bottom: 2px solid #4caf50;
 }
 
 .chart-card h3 {
@@ -226,7 +242,13 @@ body {
 }
 
 .navigation-menu .ant-menu-item-selected {
-  background-color: #e6f7ff;
+  background-color: #4caf50;
+  color: white;
+}
+
+.navigation-menu .ant-menu-item:hover {
+  background-color: #66bb6a;
+  color: white;
 }
 
 .app-header {

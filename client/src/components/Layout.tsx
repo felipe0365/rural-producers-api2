@@ -24,7 +24,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     {
       key: '/produtores',
       icon: <UserOutlined />,
-      label: 'Produtores',
+      label: 'Produtores Rurais',
       onClick: () => navigate('/produtores'),
     },
     {
@@ -45,17 +45,37 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <AntLayout style={{ minHeight: '100vh' }}>
       <Sider width={250} theme="light">
-        <div style={{ padding: '16px', textAlign: 'center' }}>
-          <Title level={4} style={{ margin: 0, color: '#1890ff' }}>
-            Produtores Rurais
+        <div
+          style={{
+            padding: '16px',
+            textAlign: 'center',
+            background: 'rgba(255,255,255,0.1)',
+            margin: '16px',
+            borderRadius: '8px',
+          }}
+        >
+          <Title level={4} style={{ margin: 0, color: '#ffffff', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
+            🌾 Produtores Rurais
           </Title>
         </div>
-        <Menu mode="inline" selectedKeys={[getSelectedKey()]} items={menuItems} style={{ borderRight: 0 }} />
+        <Menu
+          mode="inline"
+          selectedKeys={[getSelectedKey()]}
+          items={menuItems}
+          style={{ borderRight: 0, background: 'transparent' }}
+          theme="dark"
+        />
       </Sider>
       <AntLayout>
-        <Header style={{ background: '#fff', padding: '0 24px', borderBottom: '1px solid #f0f0f0' }}>
-          <Title level={3} style={{ margin: '16px 0' }}>
-            Sistema de Gestão de Produtores Rurais
+        <Header
+          style={{
+            background: 'linear-gradient(90deg, #4caf50 0%, #66bb6a 100%)',
+            padding: '0 24px',
+            borderBottom: '1px solid #2e7d32',
+          }}
+        >
+          <Title level={3} style={{ margin: '16px 0', color: '#ffffff', textShadow: '0 1px 2px rgba(0,0,0,0.3)' }}>
+            🌱 Sistema de Gestão de Produtores Rurais
           </Title>
         </Header>
         <Content style={{ margin: '24px', padding: '24px', background: '#fff', borderRadius: '8px' }}>

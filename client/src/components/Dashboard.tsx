@@ -42,31 +42,37 @@ const Dashboard: React.FC = () => {
 
   return (
     <div>
-      <Title level={2}>Dashboard</Title>
+      <Title level={2} style={{ color: '#2e7d32', marginBottom: '24px' }}>
+        🌾 Dashboard Agrícola
+      </Title>
 
       {/* Cards de Estatísticas */}
       <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
         <Col xs={24} sm={8}>
-          <Card className="stat-card">
-            <Statistic title="Total de Fazendas" value={dashboardData.totalFarms} prefix={<HomeOutlined />} />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card className="stat-card">
+          <Card className="stat-card" style={{ borderLeft: '4px solid #4caf50' }}>
             <Statistic
-              title="Área Total (ha)"
-              value={dashboardData.totalArea}
-              precision={2}
-              prefix={<EnvironmentOutlined />}
+              title="🏡 Total de Fazendas"
+              value={dashboardData.totalFarms}
+              prefix={<HomeOutlined style={{ color: '#4caf50' }} />}
             />
           </Card>
         </Col>
         <Col xs={24} sm={8}>
-          <Card className="stat-card">
+          <Card className="stat-card" style={{ borderLeft: '4px solid #8bc34a' }}>
             <Statistic
-              title="Total de Produtores"
+              title="🌍 Área Total (ha)"
+              value={dashboardData.totalArea}
+              precision={2}
+              prefix={<EnvironmentOutlined style={{ color: '#8bc34a' }} />}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={8}>
+          <Card className="stat-card" style={{ borderLeft: '4px solid #66bb6a' }}>
+            <Statistic
+              title="👨‍🌾 Total de Produtores"
               value={dashboardData.totalFarms > 0 ? Math.ceil(dashboardData.totalFarms / 2) : 0}
-              prefix={<UserOutlined />}
+              prefix={<UserOutlined style={{ color: '#66bb6a' }} />}
             />
           </Card>
         </Col>
