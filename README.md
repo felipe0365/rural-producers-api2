@@ -1,256 +1,402 @@
-# Sistema de Gestão de Produtores Rurais
+# 🌾 Sistema de Gestão de Produtores Rurais
 
-Sistema completo para gerenciamento de produtores rurais, fazendas, culturas e safras plantadas, com sistema de autenticação integrado.
+[![NestJS](https://img.shields.io/badge/NestJS-11.0.1-red.svg)](https://nestjs.com/)
+[![React](https://img.shields.io/badge/React-19.1.0-blue.svg)](https://reactjs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7.3-blue.svg)](https://www.typescriptlang.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue.svg)](https://www.postgresql.org/)
+[![Docker](https://img.shields.io/badge/Docker-Compose-blue.svg)](https://www.docker.com/)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-## 🚀 Funcionalidades
+> Sistema completo de gestão para produtores rurais com interface moderna e API robusta
 
-### Autenticação
+## 📋 Índice
 
-- ✅ Login com username e password
-- ✅ Registro de novos usuários
-- ✅ Proteção de rotas com JWT
-- ✅ Logout automático
-- ✅ Interface moderna com design Frosted Glass UI
+- [✨ Funcionalidades](#-funcionalidades)
+- [🛠️ Stack Tecnológica](#️-stack-tecnológica)
+- [🚀 Quick Start](#-quick-start)
+- [📦 Instalação](#-instalação)
+- [🐳 Docker](#-docker)
+- [🔧 Desenvolvimento](#-desenvolvimento)
+- [📚 Documentação da API](#-documentação-da-api)
+- [🧪 Testes](#-testes)
+- [📊 Estrutura do Projeto](#-estrutura-do-projeto)
+- [🤝 Contribuição](#-contribuição)
+- [📄 Licença](#-licença)
 
-### Dashboard
+## ✨ Funcionalidades
 
-- 📊 Estatísticas em tempo real
-- 📈 Gráficos de distribuição por estado e cultura
-- 🎯 Resumo de uso do solo
+### 🔐 Sistema de Autenticação
 
-### Gestão de Produtores
+- **Login/Registro** com validação robusta
+- **JWT Authentication** com refresh tokens
+- **Proteção de rotas** e middleware de segurança
+- **Logout automático** e limpeza de sessão
 
-- 👥 Cadastro completo de produtores (CPF/CNPJ)
-- 🏡 Gestão de múltiplas fazendas por produtor
-- 🌾 Controle de culturas plantadas por safra
-- 📋 Validação de áreas e dados
-- 🔍 Busca e filtros avançados
+### 📊 Dashboard Inteligente
 
-## 🛠️ Tecnologias
+- **Estatísticas em tempo real** de produtores e fazendas
+- **Gráficos interativos** com distribuição por estado e cultura
+- **Métricas de uso do solo** e produtividade
+- **Indicadores de performance** agrícola
+
+### 👥 Gestão de Produtores
+
+- **Cadastro completo** com validação de CPF/CNPJ
+- **Gestão de múltiplas fazendas** por produtor
+- **Controle de culturas** e safras plantadas
+- **Busca avançada** com filtros dinâmicos
+- **Validação de áreas** e dados geográficos
+
+### 🏡 Gestão de Fazendas
+
+- **Cadastro de propriedades** com dados completos
+- **Controle de área total** e área plantada
+- **Mapeamento de culturas** por fazenda
+- **Histórico de safras** e produtividade
+
+### 🌱 Gestão de Culturas
+
+- **Catálogo de culturas** disponíveis
+- **Controle de safras** plantadas
+- **Métricas de produção** por cultura
+- **Análise de distribuição** geográfica
+
+## 🛠️ Stack Tecnológica
 
 ### Backend
 
-- **NestJS** - Framework Node.js
-- **TypeORM** - ORM para banco de dados
-- **PostgreSQL** - Banco de dados principal
-- **JWT** - Autenticação
-- **Passport** - Estratégias de autenticação
-- **bcryptjs** - Hash de senhas
-- **Swagger** - Documentação da API
+| Tecnologia     | Versão | Propósito                   |
+| -------------- | ------ | --------------------------- |
+| **NestJS**     | 11.0.1 | Framework Node.js para APIs |
+| **TypeORM**    | 0.3.25 | ORM para banco de dados     |
+| **PostgreSQL** | 15+    | Banco de dados principal    |
+| **JWT**        | 9.0.2  | Autenticação e autorização  |
+| **Passport**   | 0.7.0  | Estratégias de autenticação |
+| **Swagger**    | 11.2.0 | Documentação da API         |
+| **bcryptjs**   | 3.0.2  | Hash de senhas              |
 
 ### Frontend
 
-- **React 19** com TypeScript
-- **Ant Design** - Componentes UI
-- **Framer Motion** - Animações
-- **React Router DOM** - Navegação
-- **Axios** - Comunicação com API
-- **React Hook Form** - Formulários
-- **Zod** - Validação
+| Tecnologia          | Versão   | Propósito                    |
+| ------------------- | -------- | ---------------------------- |
+| **React**           | 19.1.0   | Biblioteca UI                |
+| **TypeScript**      | 5.8.3    | Tipagem estática             |
+| **Ant Design**      | 5.26.7   | Componentes UI               |
+| **Framer Motion**   | 12.23.12 | Animações                    |
+| **React Router**    | 7.7.1    | Navegação                    |
+| **Axios**           | 1.11.0   | Cliente HTTP                 |
+| **React Hook Form** | 7.62.0   | Gerenciamento de formulários |
+| **Zod**             | 4.0.14   | Validação de schemas         |
+| **Recharts**        | 3.1.0    | Gráficos e visualizações     |
 
-## 📦 Instalação
+### DevOps & Ferramentas
 
-### Pré-requisitos
+- **Docker & Docker Compose** - Containerização
+- **ESLint & Prettier** - Linting e formatação
+- **Jest** - Testes automatizados
+- **Vite** - Build tool para frontend
+- **Nginx** - Servidor web para produção
 
-- Node.js 18+
-- PostgreSQL 15+
-- npm ou yarn
+## 🚀 Quick Start
 
-### 1. Clone o repositório
+### Com Docker (Recomendado)
 
 ```bash
-git clone <repository-url>
+# Clone o repositório
+git clone https://github.com/seu-usuario/rural-producers-api.git
 cd rural-producers-api
-```
 
-### 2. Configure as variáveis de ambiente
-
-```bash
+# Configure as variáveis de ambiente
 cp .env.example .env
-```
+# Edite o arquivo .env com suas configurações
 
-Edite o arquivo `.env` com suas configurações de banco de dados.
-
-### 3. Instale as dependências
-
-```bash
-# Backend
-npm install
-
-# Frontend
-cd client
-npm install
-cd ..
-```
-
-### 4. Configure o banco de dados
-
-```bash
-# Crie o banco de dados PostgreSQL
-createdb rural_producers
-```
-
-### 5. Execute o projeto
-
-```bash
-# Backend
-npm run start:dev
-
-# Frontend (em outro terminal)
-cd client
-npm run dev
-```
-
-## 🐳 Docker
-
-Para executar com Docker Compose:
-
-```bash
+# Execute com Docker Compose
 docker-compose up --build
 ```
 
-## 🔐 Autenticação
+Acesse:
 
-### Endpoints da API
+- **Frontend**: http://localhost:3001
+- **Backend API**: http://localhost:3000
+- **Documentação**: http://localhost:3000/api/docs
 
-#### Login
+### Instalação Local
 
-```http
-POST /api/auth/login
-Content-Type: application/json
+```bash
+# Clone o repositório
+git clone https://github.com/seu-usuario/rural-producers-api.git
+cd rural-producers-api
 
-{
-  "username": "usuario",
-  "password": "senha123"
-}
+# Instale dependências do backend
+npm install
+
+# Instale dependências do frontend
+cd client && npm install && cd ..
+
+# Configure o banco de dados PostgreSQL
+createdb rural_producers
+
+# Execute o projeto
+npm run start:dev  # Backend
+cd client && npm run dev  # Frontend
 ```
 
-#### Registro
+## 📦 Instalação Detalhada
 
-```http
-POST /api/auth/register
-Content-Type: application/json
+### Pré-requisitos
 
-{
-  "name": "Nome Completo",
-  "username": "usuario",
-  "password": "senha123"
-}
-```
+- **Node.js** 18+
+- **PostgreSQL** 15+
+- **npm** ou **yarn**
+- **Git**
 
-### Uso no Frontend
+### Passo a Passo
 
-O sistema de autenticação está integrado ao frontend com:
+1. **Clone o repositório**
 
-- **Contexto de Autenticação**: Gerencia estado do usuário
-- **Rotas Protegidas**: Redireciona para login se não autenticado
-- **Interceptor de Token**: Adiciona automaticamente o token JWT nas requisições
-- **Logout**: Limpa dados locais e redireciona para login
+   ```bash
+   git clone https://github.com/seu-usuario/rural-producers-api.git
+   cd rural-producers-api
+   ```
 
-## 🎨 Design System
+2. **Configure as variáveis de ambiente**
 
-O projeto utiliza o design system **Frosted Glass UI** com:
+   ```bash
+   cp .env.example .env
+   ```
 
-- **Glassmorphism**: Efeito de vidro fosco
-- **Animações Suaves**: Transições fluidas com Framer Motion
-- **Paleta de Cores**: Cores modernas e acessíveis
-- **Tipografia**: Fonte Inter para melhor legibilidade
-- **Responsividade**: Interface adaptável a diferentes dispositivos
+   Edite o arquivo `.env`:
 
-## 📱 Rotas da Aplicação
+   ```env
+   # Database
+   DB_HOST=localhost
+   DB_PORT=5432
+   DB_USERNAME=postgres
+   DB_PASSWORD=sua_senha
+   DB_DATABASE=rural_producers
 
-- `/login` - Página de autenticação
-- `/` - Dashboard principal
-- `/produtores` - Lista de produtores
-- `/produtores/novo` - Cadastro de produtor
-- `/produtores/editar/:id` - Edição de produtor
-- `/produtores/detalhes/:id` - Detalhes do produtor
+   # Application
+   PORT=3000
+   JWT_SECRET=seu_jwt_secret_super_seguro
+
+   # Frontend
+   FRONTEND_PORT=3001
+   ```
+
+3. **Configure o banco de dados**
+
+   ```bash
+   # Crie o banco de dados
+   createdb rural_producers
+
+   # Ou usando psql
+   psql -U postgres -c "CREATE DATABASE rural_producers;"
+   ```
+
+4. **Instale as dependências**
+
+   ```bash
+   # Backend
+   npm install
+
+   # Frontend
+   cd client
+   npm install
+   cd ..
+   ```
+
+5. **Execute as migrações**
+
+   ```bash
+   npm run migration:run
+   ```
+
+6. **Inicie o projeto**
+
+   ```bash
+   # Terminal 1 - Backend
+   npm run start:dev
+
+   # Terminal 2 - Frontend
+   cd client
+   npm run dev
+   ```
+
+### Serviços Disponíveis
+
+- **Frontend**: http://localhost:3001
+- **Backend API**: http://localhost:3000
+- **PostgreSQL**: localhost:5432
+- **Documentação Swagger**: http://localhost:3000/api/docs
 
 ## 🔧 Desenvolvimento
 
-### Estrutura do Projeto
-
-```
-├── src/
-│   ├── auth/                 # Sistema de autenticação
-│   ├── producers/            # Módulo de produtores
-│   ├── farms/               # Módulo de fazendas
-│   ├── culture/             # Módulo de culturas
-│   ├── planted-crops/       # Módulo de safras
-│   └── dashboard/           # Módulo do dashboard
-├── client/
-│   ├── src/
-│   │   ├── components/      # Componentes React
-│   │   ├── contexts/        # Contextos (Auth)
-│   │   ├── services/        # Serviços de API
-│   │   └── ...
-└── test/                    # Testes automatizados
-```
-
 ### Scripts Disponíveis
 
+#### Backend
+
 ```bash
-# Backend
-npm run start:dev          # Desenvolvimento
+npm run start:dev          # Desenvolvimento com hot reload
+npm run start:debug        # Desenvolvimento com debug
 npm run build              # Build para produção
 npm run start:prod         # Executar produção
-npm run test               # Executar testes
-npm run test:e2e           # Testes end-to-end
+npm run test               # Executar testes unitários
+npm run test:e2e           # Executar testes end-to-end
+npm run test:cov           # Cobertura de testes
+npm run lint               # Linting
+npm run format             # Formatação de código
+```
 
-# Frontend
+#### Frontend
+
+```bash
 cd client
 npm run dev                # Desenvolvimento
 npm run build              # Build para produção
 npm run preview            # Preview da build
+npm run lint               # Linting
 ```
 
-## 📊 API Documentation
+### Estrutura do Projeto
 
-A documentação da API está disponível em:
+```
+rural-producers-api/
+├── 📁 src/                    # Backend - NestJS
+│   ├── 🔐 auth/              # Sistema de autenticação
+│   ├── 👥 producers/         # Módulo de produtores
+│   ├── 🏡 farms/            # Módulo de fazendas
+│   ├── 🌱 culture/          # Módulo de culturas
+│   ├── 📊 planted-crops/    # Módulo de safras
+│   ├── 📈 dashboard/        # Módulo do dashboard
+│   └── 🔧 common/           # Utilitários compartilhados
+├── 📁 client/                # Frontend - React
+│   ├── 📁 src/
+│   │   ├── 🧩 components/   # Componentes React
+│   │   ├── 🔄 contexts/     # Contextos (Auth)
+│   │   ├── 🌐 services/     # Serviços de API
+│   │   └── 📱 pages/        # Páginas da aplicação
+│   └── 📁 public/           # Arquivos estáticos
+├── 📁 test/                  # Testes automatizados
+├── 🐳 docker-compose.yml     # Configuração Docker
+└── 📄 README.md             # Documentação
+```
+
+### Padrões de Código
+
+- **TypeScript** para tipagem estática
+- **ESLint + Prettier** para formatação
+- **Conventional Commits** para mensagens
+- **Modular Architecture** com NestJS
+- **Component-Based** com React
+- **RESTful APIs** com documentação Swagger
+
+## 📚 Documentação da API
+
+### Endpoints Principais
+
+#### Autenticação
+
+```http
+POST /api/auth/login          # Login de usuário
+POST /api/auth/register       # Registro de usuário
+GET  /api/auth/profile        # Perfil do usuário
+```
+
+#### Produtores
+
+```http
+GET    /api/producers         # Listar produtores
+POST   /api/producers         # Criar produtor
+GET    /api/producers/:id     # Buscar produtor
+PUT    /api/producers/:id     # Atualizar produtor
+DELETE /api/producers/:id     # Deletar produtor
+```
+
+#### Fazendas
+
+```http
+GET    /api/farms             # Listar fazendas
+POST   /api/farms             # Criar fazenda
+GET    /api/farms/:id         # Buscar fazenda
+PUT    /api/farms/:id         # Atualizar fazenda
+DELETE /api/farms/:id         # Deletar fazenda
+```
+
+#### Dashboard
+
+```http
+GET /api/dashboard/stats      # Estatísticas gerais
+GET /api/dashboard/charts     # Dados para gráficos
+```
+
+### Documentação Interativa
+
+Acesse a documentação completa da API em:
 
 - **Swagger UI**: http://localhost:3000/api/docs
 - **OpenAPI JSON**: http://localhost:3000/api/docs-json
 
 ## 🧪 Testes
 
+### Executando Testes
+
 ```bash
 # Testes unitários
 npm run test
+
+# Testes em modo watch
+npm run test:watch
 
 # Testes end-to-end
 npm run test:e2e
 
 # Cobertura de testes
 npm run test:cov
+
+# Testes de debug
+npm run test:debug
 ```
 
-## 🚀 Deploy
+### Estrutura de Testes
 
-### Produção
-
-1. Configure as variáveis de ambiente para produção
-2. Execute `npm run build` no backend
-3. Execute `npm run build` no frontend
-4. Configure um servidor web para servir os arquivos estáticos
-
-### Docker
-
-```bash
-docker-compose -f docker-compose.prod.yml up --build
+```
+test/
+├── 📁 helpers/              # Utilitários de teste
+├── 🧪 app.e2e-spec.ts       # Testes da aplicação
+├── 🧪 producer.e2e-spec.ts  # Testes de produtores
+├── 🧪 farms.e2e-spec.ts     # Testes de fazendas
+└── 🧪 culture.e2e-spec.ts   # Testes de culturas
 ```
 
-## 🤝 Contribuição
+### Padrões de Commit
 
-1. Fork o projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
+Seguimos o [Conventional Commits](https://www.conventionalcommits.org/):
+
+- `feat:` - Nova funcionalidade
+- `fix:` - Correção de bug
+- `docs:` - Documentação
+- `style:` - Formatação
+- `refactor:` - Refatoração
+- `test:` - Testes
+- `chore:` - Manutenção
 
 ## 📄 Licença
 
-Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
+Este projeto está licenciado sob a **MIT License** - veja o arquivo [LICENSE](LICENSE) para detalhes.
 
 ## 📞 Suporte
 
-Para suporte, envie um email para [seu-email@exemplo.com] ou abra uma issue no repositório.
+- **Email**: felipe0365@gmail.com
+- **Documentação**: [Wiki do Projeto](https://github.com/seu-usuario/rural-producers-api/wiki)
+
+---
+
+<div align="center">
+
+**Desenvolvido por Felipe Moreira**
+
+[![GitHub stars](https://img.shields.io/github/stars/seu-usuario/rural-producers-api?style=social)](https://github.com/seu-usuario/rural-producers-api/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/seu-usuario/rural-producers-api?style=social)](https://github.com/seu-usuario/rural-producers-api/network)
+[![GitHub issues](https://img.shields.io/github/issues/seu-usuario/rural-producers-api)](https://github.com/seu-usuario/rural-producers-api/issues)
+
+</div>
