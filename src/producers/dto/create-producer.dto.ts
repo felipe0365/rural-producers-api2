@@ -1,7 +1,9 @@
-import { IsEnum, IsNotEmpty, IsString, Validate } from 'class-validator'
+import { IsEnum, IsNotEmpty, IsString, Validate, IsArray, ValidateNested, IsOptional } from 'class-validator'
 import { ApiProperty } from '@nestjs/swagger'
 import { DocumentType } from '../entities/producer.entity'
 import { IsCpfOrCnpj } from './custom-validators/is-cpf-or-cnpj.validator'
+import { Type } from 'class-transformer'
+import { CreateFarmDto } from '../../farms/dto/create-farm.dto'
 
 export class CreateProducerDto {
   @ApiProperty({
@@ -33,4 +35,15 @@ export class CreateProducerDto {
   @IsString({ message: 'O nome do produtor deve ser uma string' })
   @IsNotEmpty({ message: 'O nome do produtor não pode estar vazio' })
   producerName: string
+
+  @ApiProperty({
+    description: 'Lista de fazendas do produtor',
+    type: [CreateFarmDto],
+    required: false,
+  })
+  @IsOptional()
+  @IsArray({ message: 'As fazendas devem ser um array' })
+  @ValidateNested({ each: true })
+  @Type(() => CreateFarmDto)
+  farms?: CreateFarmDto[]
 }

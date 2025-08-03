@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsNumber, IsString, IsUUID, Min } from 'class-validator'
+import { IsNotEmpty, IsNumber, IsString, IsUUID, Min, IsOptional } from 'class-validator'
 import { ApiProperty } from '@nestjs/swagger'
 
 export class CreateFarmDto {
@@ -60,10 +60,11 @@ export class CreateFarmDto {
   vegetationArea: number
 
   @ApiProperty({
-    description: 'ID do produtor proprietário da fazenda',
+    description: 'ID do produtor proprietário da fazenda (opcional quando criado junto com o produtor)',
     example: '123e4567-e89b-12d3-a456-426614174000',
+    required: false,
   })
+  @IsOptional()
   @IsUUID()
-  @IsNotEmpty()
-  producerId: string
+  producerId?: string
 }

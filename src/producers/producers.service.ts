@@ -87,7 +87,10 @@ export class ProducersService {
 
   async findOne(id: string): Promise<Producer> {
     this.logger.log(`Buscando produtor com ID: ${id}`)
-    const producer = await this.producerRepository.findOne({ where: { id } })
+    const producer = await this.producerRepository.findOne({
+      where: { id },
+      relations: ['farms', 'farms.plantedCrops'],
+    })
     if (!producer) {
       this.logger.warn(`Produtor com o ID ${id} não encontrado.`)
       throw new NotFoundException(`Produtor com o ID ${id} não encontrado.`)

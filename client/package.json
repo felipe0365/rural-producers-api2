@@ -10,10 +10,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@ant-design/icons": "^6.0.0",
+    "@hookform/resolvers": "^5.2.1",
+    "@types/react-router-dom": "^5.3.3",
+    "antd": "^5.26.7",
     "axios": "^1.11.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "recharts": "^3.1.0"
+    "react-hook-form": "^7.62.0",
+    "react-router-dom": "^7.7.1",
+    "recharts": "^3.1.0",
+    "zod": "^4.0.14"
   },
   "devDependencies": {
     "@eslint/js": "^9.30.1",

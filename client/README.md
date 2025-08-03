@@ -1,69 +1,114 @@
-# React + TypeScript + Vite
+# Sistema de Gestão de Produtores Rurais - Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Este é o frontend da aplicação de gestão de produtores rurais, desenvolvido com React, TypeScript e Ant Design.
 
-Currently, two official plugins are available:
+## 🚀 Como Acessar
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+A aplicação está disponível em:
 
-## Expanding the ESLint configuration
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:3000
+- **PgAdmin**: http://localhost:5050
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## 🛠️ Tecnologias Utilizadas
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- **React 19** com TypeScript
+- **Ant Design** para componentes UI
+- **React Router DOM** para navegação
+- **React Hook Form** com **Zod** para validação
+- **Recharts** para gráficos
+- **Axios** para comunicação com API
+- **Vite** como bundler
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+## 📱 Funcionalidades
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Dashboard (`/`)
+
+- Cards de estatísticas (Total de Fazendas, Área Total, Total de Produtores)
+- Gráficos de pizza (Fazendas por Estado, Culturas por Área, Uso do Solo)
+- Interface responsiva e moderna
+
+### Lista de Produtores (`/produtores`)
+
+- Tabela com paginação
+- Busca por nome do produtor
+- Ações: Visualizar, Editar, Excluir
+- Confirmação antes de excluir
+
+### Formulário de Produtor (`/produtores/novo` e `/produtores/editar/:id`)
+
+- Dados do produtor (CPF/CNPJ, nome)
+- Sistema de fazendas dinâmicas (accordion)
+- Validação de áreas (soma não pode ultrapassar área total)
+- Culturas plantadas por safra
+- Validação em tempo real com Zod
+
+### Detalhes do Produtor (`/produtores/detalhes/:id`)
+
+- Visualização completa dos dados
+- Resumo das fazendas
+- Detalhes de cada fazenda e culturas
+
+## 🎨 Interface e UX
+
+- Layout responsivo com sidebar de navegação
+- Design moderno e limpo
+- Feedback visual para ações do usuário
+- Validação em tempo real
+- Mensagens de erro claras
+- Loading states apropriados
+
+## 🔧 Desenvolvimento
+
+### Pré-requisitos
+
+- Node.js 18+
+- npm ou yarn
+
+### Instalação
+
+```bash
+cd client
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### Execução em Desenvolvimento
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run dev
 ```
+
+### Build para Produção
+
+```bash
+npm run build
+```
+
+## 🐳 Docker
+
+Para executar com Docker:
+
+```bash
+docker-compose up --build
+```
+
+## 📋 Rotas Disponíveis
+
+- `/` - Dashboard
+- `/produtores` - Lista de produtores
+- `/produtores/novo` - Cadastrar novo produtor
+- `/produtores/editar/:id` - Editar produtor
+- `/produtores/detalhes/:id` - Ver detalhes do produtor
+
+## 🔗 Integração com Backend
+
+O frontend se comunica com o backend através da API REST em `http://localhost:3000/api/`.
+
+### Endpoints Principais:
+
+- `GET /api/dashboard` - Dados do dashboard
+- `GET /api/producers` - Lista de produtores
+- `POST /api/producers` - Criar produtor
+- `GET /api/producers/:id` - Buscar produtor
+- `PATCH /api/producers/:id` - Atualizar produtor
+- `DELETE /api/producers/:id` - Excluir produtor

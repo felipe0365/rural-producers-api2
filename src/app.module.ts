@@ -22,7 +22,6 @@ import { DashboardModule } from './dashboard/dashboard.module'
         const dbHost = configService.get<string>('DB_HOST')
         const dbUsername = configService.get<string>('DB_USERNAME')
 
-        // Se não houver configuração de PostgreSQL, usar SQLite
         if (!dbHost || !dbUsername) {
           return {
             type: 'sqlite',
@@ -33,7 +32,6 @@ import { DashboardModule } from './dashboard/dashboard.module'
           }
         }
 
-        // Usar PostgreSQL se configurado
         return {
           type: 'postgres',
           host: dbHost,
