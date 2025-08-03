@@ -1,7 +1,10 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { ConfigProvider } from 'antd'
 import ptBR from 'antd/locale/pt_BR'
+import { AuthProvider } from './contexts/AuthContext'
 import Layout from './components/Layout'
+import LoginPage from './components/LoginPage'
+import ProtectedRoute from './components/ProtectedRoute'
 import Dashboard from './components/Dashboard'
 import ProducersList from './components/ProducersList'
 import ProducerForm from './components/ProducerForm'
@@ -22,17 +25,64 @@ function App() {
 
   return (
     <ConfigProvider locale={ptBR} theme={theme}>
-      <Router>
-        <Layout>
+      <AuthProvider>
+        <Router>
           <Routes>
-            <Route path="/" element={<Dashboard />} />
-            <Route path="/produtores" element={<ProducersList />} />
-            <Route path="/produtores/novo" element={<ProducerForm />} />
-            <Route path="/produtores/editar/:id" element={<ProducerForm />} />
-            <Route path="/produtores/detalhes/:id" element={<ProducerDetails />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <Dashboard />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/produtores"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ProducersList />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/produtores/novo"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ProducerForm />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/produtores/editar/:id"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ProducerForm />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/produtores/detalhes/:id"
+              element={
+                <ProtectedRoute>
+                  <Layout>
+                    <ProducerDetails />
+                  </Layout>
+                </ProtectedRoute>
+              }
+            />
+            <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-        </Layout>
-      </Router>
+        </Router>
+      </AuthProvider>
     </ConfigProvider>
   )
 }

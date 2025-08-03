@@ -8,6 +8,7 @@ import { FarmsModule } from './farms/farms.module'
 import { CultureModule } from './culture/culture.module'
 import { PlantedCropsModule } from './planted-crops/planted-crops.module'
 import { DashboardModule } from './dashboard/dashboard.module'
+import { AuthModule } from './auth/auth.module'
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { DashboardModule } from './dashboard/dashboard.module'
         }
       },
     }),
+    AuthModule,
     ProducersModule,
     FarmsModule,
     CultureModule,

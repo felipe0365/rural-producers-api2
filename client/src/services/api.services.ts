@@ -1,11 +1,25 @@
 import axios from 'axios'
 
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3000',
+  baseURL: process.env.REACT_APP_API_URL || '/api',
   headers: {
     'Content-Type': 'application/json',
   },
 })
+
+// Interceptor para adicionar token de autenticação
+apiClient.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
+  },
+  (error) => {
+    return Promise.reject(error)
+  },
+)
 
 // Interceptor para tratamento de erros
 apiClient.interceptors.response.use(
@@ -120,7 +134,7 @@ export interface PaginatedResponseDto<T> {
 
 // Serviços da API
 export const getDashboardData = async (): Promise<DashboardData> => {
-  const response = await apiClient.get('/api/dashboard')
+  const response = await apiClient.get('/dashboard')
   return response.data
 }
 
@@ -134,29 +148,29 @@ export const getProducers = async (
     limit: pagination.limit.toString(),
     ...filters,
   })
-  const response = await apiClient.get(`/api/producers?${params}`)
+  const response = await apiClient.get(`/producers?${params}`)
   return response.data
 }
 
 export const getProducer = async (id: string): Promise<Producer> => {
-  const response = await apiClient.get(`/api/producers/${id}`)
+  const response = await apiClient.get(`/producers/${id}`)
   return response.data
 }
 
 export const createProducer = async (data: CreateProducerDto): Promise<Producer> => {
-  const response = await apiClient.post('/api/producers', data)
+  const response = await apiClient.post('/producers', data)
   return response.data
 }
 
 export const updateProducer = async (id: string, data: UpdateProducerDto): Promise<Producer> => {
-  const response = await apiClient.patch(`/api/producers/${id}`, data)
+  const response = await apiClient.patch(`/producers/${id}`, data)
   return response.data
 }
 
 export const deleteProducer = async (id: string): Promise<void> => {
   try {
-    console.log('Fazendo requisição DELETE para:', `/api/producers/${id}`)
-    const response = await apiClient.delete(`/api/producers/${id}`)
+    console.log('Fazendo requisição DELETE para:', `/producers/${id}`)
+    const response = await apiClient.delete(`/producers/${id}`)
     console.log('Resposta da requisição DELETE:', response.status, response.statusText)
   } catch (error: any) {
     console.error('Erro na requisição DELETE:', error)

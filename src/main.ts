@@ -40,8 +40,11 @@ async function bootstrap() {
 
   const config = new DocumentBuilder()
     .setTitle('API de Produtores Rurais')
-    .setDescription('API para gerenciamento de produtores rurais, fazendas, culturas e safras plantadas')
+    .setDescription(
+      'API para gerenciamento de produtores rurais, fazendas, culturas e safras plantadas com sistema de autenticação',
+    )
     .setVersion('1.0')
+    .addTag('autenticação', 'Operações de login e registro de usuários')
     .addTag('produtores', 'Operações relacionadas aos produtores rurais')
     .addTag('fazendas', 'Operações relacionadas às fazendas')
     .addTag('culturas', 'Operações relacionadas às culturas agrícolas')
