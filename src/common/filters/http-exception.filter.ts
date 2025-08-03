@@ -5,6 +5,27 @@ import { Request, Response } from 'express'
 export class HttpExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger(HttpExceptionFilter.name)
 
+  private getErrorName(status: number): string {
+    switch (status) {
+      case HttpStatus.BAD_REQUEST:
+        return 'Bad Request'
+      case HttpStatus.UNAUTHORIZED:
+        return 'Unauthorized'
+      case HttpStatus.FORBIDDEN:
+        return 'Forbidden'
+      case HttpStatus.NOT_FOUND:
+        return 'Not Found'
+      case HttpStatus.CONFLICT:
+        return 'Conflict'
+      case HttpStatus.UNPROCESSABLE_ENTITY:
+        return 'Unprocessable Entity'
+      case HttpStatus.INTERNAL_SERVER_ERROR:
+        return 'Internal Server Error'
+      default:
+        return 'Error'
+    }
+  }
+
   catch(exception: unknown, host: ArgumentsHost): void {
     const ctx = host.switchToHttp()
     const response = ctx.getResponse<Response>()
@@ -20,13 +41,14 @@ export class HttpExceptionFilter implements ExceptionFilter {
 
       if (typeof exceptionResponse === 'string') {
         message = exceptionResponse
+        error = this.getErrorName(status)
       } else if (typeof exceptionResponse === 'object' && exceptionResponse !== null) {
         const responseObj = exceptionResponse as any
         message = responseObj.message || exception.message
-        error = responseObj.error || exception.name
+        error = responseObj.error || this.getErrorName(status)
       } else {
         message = exception.message
-        error = exception.name
+        error = this.getErrorName(status)
       }
     } else if (exception instanceof Error) {
       message = exception.message

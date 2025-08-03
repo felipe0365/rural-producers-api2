@@ -1,372 +1,365 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common'
 import request from 'supertest'
-import { Test, TestingModule } from '@nestjs/testing'
-import { TypeOrmModule } from '@nestjs/typeorm'
-import { CreateCultureDto } from 'src/culture/dto/create-culture.dto'
-import { UpdateCultureDto } from 'src/culture/dto/update-culture.dto'
-import { CultureController } from 'src/culture/culture.controller'
-import { CultureService } from 'src/culture/culture.service'
-import { DataSource } from 'typeorm'
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm'
-
-// Versão simplificada da entidade Culture para testes
-@Entity('cultures')
-class TestCulture {
-  @PrimaryGeneratedColumn('uuid')
-  id: string
-
-  @Column({ type: 'varchar', length: 255, unique: true })
-  name: string
-}
+import {
+  createTestApp,
+  cleanupTestDatabase,
+  closeTestApp,
+  testData,
+  expectValidationError,
+  expectNotFoundError,
+  expectConflictError,
+  TestApp,
+} from './helpers/test-setup'
 
 describe('CultureController (e2e)', () => {
-  let app: INestApplication
-  let dataSource: DataSource
+  let testApp: TestApp
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        TypeOrmModule.forRoot({
-          type: 'sqlite',
-          database: ':memory:',
-          autoLoadEntities: true,
-          synchronize: true,
-          dropSchema: true,
-        }),
-        TypeOrmModule.forFeature([TestCulture]),
-      ],
-      controllers: [CultureController],
-      providers: [
-        {
-          provide: CultureService,
-          useFactory: (dataSource: DataSource) => {
-            const repository = dataSource.getRepository(TestCulture)
-            return new CultureService(repository as any)
-          },
-          inject: [DataSource],
-        },
-      ],
-    }).compile()
-
-    app = moduleFixture.createNestApplication()
-    app.setGlobalPrefix('api')
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    )
-    await app.init()
-
-    dataSource = moduleFixture.get<DataSource>(DataSource)
+    testApp = await createTestApp()
   }, 30000)
 
   beforeEach(async () => {
-    // Limpar dados entre testes
-    const entities = dataSource.entityMetadatas
-    for (const entity of entities) {
-      const repository = dataSource.getRepository(entity.name)
-      await repository.clear()
-    }
+    await cleanupTestDatabase(testApp.dataSource)
   })
 
   afterAll(async () => {
-    if (app) {
-      await app.close()
-    }
+    await closeTestApp(testApp)
   })
 
-  describe('POST /culture', () => {
+  describe('POST /api/cultures', () => {
     it('deve criar uma cultura válida', async () => {
-      const createCultureDto: CreateCultureDto = {
-        name: 'Soja',
-      }
+      const createCultureDto = testData.cultures.valid
 
-      return request(app.getHttpServer())
-        .post('/api/culture')
+      const response = await request(testApp.app.getHttpServer())
+        .post('/api/cultures')
         .send(createCultureDto)
         .expect(201)
-        .then((response) => {
-          expect(response.body).toEqual({
-            id: expect.any(String),
-            name: createCultureDto.name,
-          })
-        })
+
+      expect(response.body).toEqual({
+        id: expect.any(String),
+        name: createCultureDto.cultureName,
+        description: createCultureDto.description,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+      })
     })
 
-    it('deve retornar 400 para nome vazio', () => {
-      const invalidDto = {
-        name: '',
-      }
+    it('deve rejeitar cultura com nome duplicado', async () => {
+      const createCultureDto = testData.cultures.valid
 
-      return request(app.getHttpServer())
-        .post('/api/culture')
-        .send(invalidDto)
-        .expect(400)
-        .then((response) => {
-          expect(response.body.message).toContain('name should not be empty')
-        })
+      await request(testApp.app.getHttpServer()).post('/api/cultures').send(createCultureDto).expect(201)
+
+      const response = await request(testApp.app.getHttpServer()).post('/api/cultures').send(createCultureDto)
+
+      expectConflictError(response, 'já existe')
     })
 
-    it('deve retornar 400 para nome não string', () => {
-      const invalidDto = {
-        name: 123,
-      }
+    it('deve rejeitar dados obrigatórios ausentes', async () => {
+      const response = await request(testApp.app.getHttpServer()).post('/api/cultures').send({})
 
-      return request(app.getHttpServer())
-        .post('/api/culture')
-        .send(invalidDto)
-        .expect(400)
-        .then((response) => {
-          expect(response.body.message).toContain('name must be a string')
-        })
+      expectValidationError(response, 'name')
     })
 
-    it('deve retornar 409 para nome duplicado', async () => {
-      const createCultureDto: CreateCultureDto = {
-        name: 'Milho',
+    it('deve rejeitar nome muito curto', async () => {
+      const createCultureDto = {
+        ...testData.cultures.valid,
+        cultureName: 'So',
       }
 
-      // Criar primeira cultura
-      await request(app.getHttpServer()).post('/api/culture').send(createCultureDto).expect(201)
+      const response = await request(testApp.app.getHttpServer()).post('/api/cultures').send(createCultureDto)
 
-      // Tentar criar segunda cultura com mesmo nome
-      return request(app.getHttpServer())
-        .post('/api/culture')
+      expectValidationError(response, 'name')
+    })
+
+    it('deve rejeitar nome muito longo', async () => {
+      const createCultureDto = {
+        ...testData.cultures.valid,
+        cultureName: 'A'.repeat(256),
+      }
+
+      const response = await request(testApp.app.getHttpServer()).post('/api/cultures').send(createCultureDto)
+
+      expectValidationError(response, 'name')
+    })
+
+    it('deve aceitar cultura sem descrição', async () => {
+      const createCultureDto = {
+        cultureName: 'Milho',
+      }
+
+      const response = await request(testApp.app.getHttpServer())
+        .post('/api/cultures')
         .send(createCultureDto)
-        .expect(409)
-        .then((response) => {
-          expect(response.body.message).toContain('Cultura com nome: Milho já existe')
-        })
+        .expect(201)
+
+      expect(response.body.name).toBe('Milho')
+      expect(response.body.description).toBeNull()
     })
   })
 
-  describe('GET /culture', () => {
-    it('deve retornar lista vazia quando não há culturas', () => {
-      return request(app.getHttpServer())
-        .get('/api/culture')
-        .expect(200)
-        .then((response) => {
-          expect(response.body).toEqual([])
-        })
+  describe('GET /api/cultures', () => {
+    beforeEach(async () => {
+      await request(testApp.app.getHttpServer()).post('/api/cultures').send(testData.cultures.valid)
+
+      await request(testApp.app.getHttpServer()).post('/api/cultures').send({
+        cultureName: 'Milho',
+        description: 'Cultura de milho',
+      })
     })
 
-    it('deve retornar todas as culturas', async () => {
-      const cultures = [{ name: 'Soja' }, { name: 'Milho' }, { name: 'Arroz' }]
+    it('deve retornar lista paginada de culturas', async () => {
+      const response = await request(testApp.app.getHttpServer()).get('/api/cultures').expect(200)
 
-      // Criar culturas
-      for (const culture of cultures) {
-        await request(app.getHttpServer()).post('/api/culture').send(culture).expect(201)
-      }
-
-      // Buscar todas as culturas
-      return request(app.getHttpServer())
-        .get('/api/culture')
-        .expect(200)
-        .then((response) => {
-          expect(response.body).toHaveLength(3)
-          expect(response.body[0]).toHaveProperty('id')
-          expect(response.body[0]).toHaveProperty('name')
-        })
+      expect(response.body).toEqual({
+        data: expect.arrayContaining([
+          expect.objectContaining({
+            id: expect.any(String),
+            name: expect.any(String),
+            description: expect.any(String),
+          }),
+        ]),
+        meta: {
+          page: 1,
+          limit: 10,
+          total: 2,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
+        },
+      })
     })
-  })
 
-  describe('GET /culture/:id', () => {
-    it('deve retornar uma cultura específica', async () => {
-      const createCultureDto: CreateCultureDto = {
-        name: 'Soja',
-      }
+    it('deve filtrar por nome da cultura', async () => {
+      const response = await request(testApp.app.getHttpServer()).get('/api/cultures?name=Soja').expect(200)
 
-      // Criar cultura
-      const createResponse = await request(app.getHttpServer()).post('/api/culture').send(createCultureDto).expect(201)
+      expect(response.body.data).toHaveLength(1)
+      expect(response.body.data[0].name).toBe('Soja')
+    })
 
-      const cultureId = createResponse.body.id
-
-      // Buscar cultura específica
-      return request(app.getHttpServer())
-        .get(`/api/culture/${cultureId}`)
-        .expect(200)
-        .then((response) => {
-          expect(response.body).toEqual({
-            id: cultureId,
-            name: 'Soja',
+    it('deve paginar corretamente', async () => {
+      for (let i = 0; i < 5; i++) {
+        await request(testApp.app.getHttpServer())
+          .post('/api/cultures')
+          .send({
+            cultureName: `Cultura ${i + 3}`,
+            description: `Descrição ${i + 3}`,
           })
-        })
+      }
+
+      const response = await request(testApp.app.getHttpServer()).get('/api/cultures?page=1&limit=3').expect(200)
+
+      expect(response.body.data).toHaveLength(3)
+      expect(response.body.meta).toEqual({
+        page: 1,
+        limit: 3,
+        total: 7,
+        totalPages: 3,
+        hasNext: true,
+        hasPrev: false,
+      })
+    })
+  })
+
+  describe('GET /api/cultures/:id', () => {
+    let cultureId: string
+
+    beforeEach(async () => {
+      const response = await request(testApp.app.getHttpServer())
+        .post('/api/cultures')
+        .send(testData.cultures.valid)
+        .expect(201)
+
+      cultureId = response.body.id
     })
 
-    it('deve retornar 400 para ID inválido', () => {
-      return request(app.getHttpServer()).get('/api/culture/invalid-id').expect(400)
+    it('deve retornar uma cultura por ID', async () => {
+      const response = await request(testApp.app.getHttpServer()).get(`/api/cultures/${cultureId}`).expect(200)
+
+      expect(response.body).toEqual({
+        id: cultureId,
+        name: testData.cultures.valid.cultureName,
+        description: testData.cultures.valid.description,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+      })
     })
 
-    it('deve retornar 404 para cultura não encontrada', () => {
+    it('deve retornar 404 para ID inexistente', async () => {
       const fakeId = '123e4567-e89b-12d3-a456-426614174000'
-      return request(app.getHttpServer())
-        .get(`/api/culture/${fakeId}`)
-        .expect(404)
-        .then((response) => {
-          expect(response.body.message).toContain('Cultura não encontrada')
-        })
+
+      const response = await request(testApp.app.getHttpServer()).get(`/api/cultures/${fakeId}`)
+
+      expectNotFoundError(response, 'Cultura')
+    })
+
+    it('deve rejeitar ID inválido', async () => {
+      const response = await request(testApp.app.getHttpServer()).get('/api/cultures/invalid-id')
+
+      expect(response.status).toBe(400)
     })
   })
 
-  describe('PATCH /culture/:id', () => {
-    it('deve atualizar uma cultura existente', async () => {
-      const createCultureDto: CreateCultureDto = {
-        name: 'Soja',
-      }
+  describe('PATCH /api/cultures/:id', () => {
+    let cultureId: string
 
-      // Criar cultura
-      const createResponse = await request(app.getHttpServer()).post('/api/culture').send(createCultureDto).expect(201)
+    beforeEach(async () => {
+      const response = await request(testApp.app.getHttpServer())
+        .post('/api/cultures')
+        .send(testData.cultures.valid)
+        .expect(201)
 
-      const cultureId = createResponse.body.id
-
-      // Atualizar cultura
-      const updateCultureDto: UpdateCultureDto = {
-        name: 'Soja Transgênica',
-      }
-
-      return request(app.getHttpServer())
-        .patch(`/api/culture/${cultureId}`)
-        .send(updateCultureDto)
-        .expect(200)
-        .then((response) => {
-          expect(response.body).toEqual({
-            id: cultureId,
-            name: 'Soja Transgênica',
-          })
-        })
+      cultureId = response.body.id
     })
 
-    it('deve retornar 400 para ID inválido', () => {
-      const updateCultureDto = {
+    it('deve atualizar uma cultura', async () => {
+      const updateData = {
+        name: 'Soja Atualizada',
+        description: 'Descrição atualizada',
+      }
+
+      const response = await request(testApp.app.getHttpServer())
+        .patch(`/api/cultures/${cultureId}`)
+        .send(updateData)
+        .expect(200)
+
+      expect(response.body).toEqual({
+        id: cultureId,
+        name: updateData.name,
+        description: updateData.description,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+      })
+    })
+
+    it('deve atualizar apenas o nome', async () => {
+      const updateData = {
         name: 'Novo Nome',
       }
 
-      return request(app.getHttpServer()).patch('/api/culture/invalid-id').send(updateCultureDto).expect(400)
+      const response = await request(testApp.app.getHttpServer())
+        .patch(`/api/cultures/${cultureId}`)
+        .send(updateData)
+        .expect(200)
+
+      expect(response.body.name).toBe(updateData.name)
+      expect(response.body.description).toBe(testData.cultures.valid.description)
     })
 
-    it('deve retornar 404 para cultura não encontrada', () => {
+    it('deve rejeitar atualização com dados inválidos', async () => {
+      const updateData = {
+        name: 'So',
+      }
+
+      const response = await request(testApp.app.getHttpServer()).patch(`/api/cultures/${cultureId}`).send(updateData)
+
+      expectValidationError(response, 'name')
+    })
+
+    it('deve retornar 404 para ID inexistente', async () => {
       const fakeId = '123e4567-e89b-12d3-a456-426614174000'
-      const updateCultureDto = {
-        name: 'Novo Nome',
-      }
+      const updateData = { name: 'Teste' }
 
-      return request(app.getHttpServer())
-        .patch(`/api/culture/${fakeId}`)
-        .send(updateCultureDto)
-        .expect(404)
-        .then((response) => {
-          expect(response.body.message).toContain('Cultura não encontrada')
-        })
+      const response = await request(testApp.app.getHttpServer()).patch(`/api/cultures/${fakeId}`).send(updateData)
+
+      expectNotFoundError(response, 'Cultura')
     })
 
-    it('deve retornar 400 para dados inválidos na atualização', async () => {
-      const createCultureDto: CreateCultureDto = {
-        name: 'Soja',
-      }
-
-      // Criar cultura
-      const createResponse = await request(app.getHttpServer()).post('/api/culture').send(createCultureDto).expect(201)
-
-      const cultureId = createResponse.body.id
-
-      // Tentar atualizar com dados inválidos
-      const invalidUpdateDto = {
-        name: '',
-      }
-
-      return request(app.getHttpServer())
-        .patch(`/api/culture/${cultureId}`)
-        .send(invalidUpdateDto)
-        .expect(400)
-        .then((response) => {
-          expect(response.body.message).toContain('name should not be empty')
+    it('deve rejeitar atualização com nome duplicado', async () => {
+      await request(testApp.app.getHttpServer())
+        .post('/api/cultures')
+        .send({
+          cultureName: 'Milho',
+          description: 'Cultura de milho',
         })
+        .expect(201)
+
+      const updateData = { name: 'Milho' }
+
+      const response = await request(testApp.app.getHttpServer()).patch(`/api/cultures/${cultureId}`).send(updateData)
+
+      expectConflictError(response, 'já existe')
     })
   })
 
-  describe('DELETE /culture/:id', () => {
-    it('deve remover uma cultura existente', async () => {
-      const createCultureDto: CreateCultureDto = {
-        name: 'Soja',
-      }
+  describe('DELETE /api/cultures/:id', () => {
+    let cultureId: string
 
-      // Criar cultura
-      const createResponse = await request(app.getHttpServer()).post('/api/culture').send(createCultureDto).expect(201)
+    beforeEach(async () => {
+      const response = await request(testApp.app.getHttpServer())
+        .post('/api/cultures')
+        .send(testData.cultures.valid)
+        .expect(201)
 
-      const cultureId = createResponse.body.id
-
-      // Remover cultura
-      await request(app.getHttpServer()).delete(`/api/culture/${cultureId}`).expect(200)
-
-      // Verificar se foi removida
-      return request(app.getHttpServer()).get(`/api/culture/${cultureId}`).expect(404)
+      cultureId = response.body.id
     })
 
-    it('deve retornar 400 para ID inválido', () => {
-      return request(app.getHttpServer()).delete('/api/culture/invalid-id').expect(400)
+    it('deve remover uma cultura', async () => {
+      await request(testApp.app.getHttpServer()).delete(`/api/cultures/${cultureId}`).expect(200)
+
+      await request(testApp.app.getHttpServer()).get(`/api/cultures/${cultureId}`).expect(404)
     })
 
-    it('deve retornar 404 para cultura não encontrada', () => {
+    it('deve retornar 404 para ID inexistente', async () => {
       const fakeId = '123e4567-e89b-12d3-a456-426614174000'
-      return request(app.getHttpServer())
-        .delete(`/api/culture/${fakeId}`)
-        .expect(404)
-        .then((response) => {
-          expect(response.body.message).toContain('Cultura não encontrada')
-        })
+
+      const response = await request(testApp.app.getHttpServer()).delete(`/api/cultures/${fakeId}`)
+
+      expectNotFoundError(response, 'Cultura')
     })
   })
 
-  describe('Cenários de integração', () => {
+  describe('Fluxos de integração', () => {
     it('deve permitir CRUD completo de uma cultura', async () => {
       // CREATE
-      const createCultureDto: CreateCultureDto = {
-        name: 'Soja',
-      }
-
-      const createResponse = await request(app.getHttpServer()).post('/api/culture').send(createCultureDto).expect(201)
+      const createResponse = await request(testApp.app.getHttpServer())
+        .post('/api/cultures')
+        .send(testData.cultures.valid)
+        .expect(201)
 
       const cultureId = createResponse.body.id
-      expect(createResponse.body.name).toBe('Soja')
 
-      // READ
-      const getResponse = await request(app.getHttpServer()).get(`/api/culture/${cultureId}`).expect(200)
+      const readResponse = await request(testApp.app.getHttpServer()).get(`/api/cultures/${cultureId}`).expect(200)
 
-      expect(getResponse.body.name).toBe('Soja')
+      expect(readResponse.body.id).toBe(cultureId)
 
-      // UPDATE
-      const updateCultureDto = {
-        name: 'Soja Transgênica',
-      }
-
-      const updateResponse = await request(app.getHttpServer())
-        .patch(`/api/culture/${cultureId}`)
-        .send(updateCultureDto)
+      const updateData = { name: 'Cultura Atualizada' }
+      const updateResponse = await request(testApp.app.getHttpServer())
+        .patch(`/api/cultures/${cultureId}`)
+        .send(updateData)
         .expect(200)
 
-      expect(updateResponse.body.name).toBe('Soja Transgênica')
+      expect(updateResponse.body.name).toBe(updateData.name)
 
-      // DELETE
-      await request(app.getHttpServer()).delete(`/api/culture/${cultureId}`).expect(200)
+      await request(testApp.app.getHttpServer()).delete(`/api/cultures/${cultureId}`).expect(200)
 
-      // Verificar se foi removida
-      await request(app.getHttpServer()).get(`/api/culture/${cultureId}`).expect(404)
+      await request(testApp.app.getHttpServer()).get(`/api/cultures/${cultureId}`).expect(404)
     })
 
-    it('deve validar nomes únicos', async () => {
-      // Criar primeira cultura
-      await request(app.getHttpServer()).post('/api/culture').send({ name: 'Milho' }).expect(201)
+    it('deve validar unicidade de nomes', async () => {
+      await request(testApp.app.getHttpServer()).post('/api/cultures').send(testData.cultures.valid).expect(201)
 
-      // Tentar criar segunda cultura com mesmo nome
-      await request(app.getHttpServer()).post('/api/culture').send({ name: 'Milho' }).expect(409)
+      const response = await request(testApp.app.getHttpServer()).post('/api/cultures').send(testData.cultures.valid)
 
-      // Verificar que apenas uma foi criada
-      const response = await request(app.getHttpServer()).get('/api/culture').expect(200)
+      expectConflictError(response, 'já existe')
 
-      expect(response.body).toHaveLength(1)
-      expect(response.body[0].name).toBe('Milho')
+      const listResponse = await request(testApp.app.getHttpServer()).get('/api/cultures').expect(200)
+
+      expect(listResponse.body.data).toHaveLength(1)
+      expect(listResponse.body.data[0].name).toBe('Soja')
+    })
+
+    it('deve manter integridade dos dados', async () => {
+      const createResponse = await request(testApp.app.getHttpServer())
+        .post('/api/cultures')
+        .send(testData.cultures.valid)
+        .expect(201)
+
+      const cultureId = createResponse.body.id
+
+      const readResponse = await request(testApp.app.getHttpServer()).get(`/api/cultures/${cultureId}`).expect(200)
+
+      expect(readResponse.body.name).toBe(testData.cultures.valid.cultureName)
+      expect(readResponse.body.description).toBe(testData.cultures.valid.description)
+      expect(readResponse.body.id).toBe(cultureId)
     })
   })
 })

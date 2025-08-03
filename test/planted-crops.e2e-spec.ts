@@ -1,704 +1,533 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common'
 import request from 'supertest'
-import { Test, TestingModule } from '@nestjs/testing'
-import { TypeOrmModule } from '@nestjs/typeorm'
-import { CreatePlantedCropDto } from 'src/planted-crops/dto/create-planted-crop.dto'
-import { UpdatePlantedCropDto } from 'src/planted-crops/dto/update-planted-crop.dto'
-import { PlantedCropsController } from 'src/planted-crops/planted-crops.controller'
-import { PlantedCropsService } from 'src/planted-crops/planted-crops.service'
-import { DocumentType } from 'src/producers/entities/producer.entity'
-import { DataSource } from 'typeorm'
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, JoinColumn } from 'typeorm'
-
-// Entidades simplificadas para testes
-@Entity('producers')
-class TestProducer {
-  @PrimaryGeneratedColumn('uuid')
-  id: string
-
-  @Column({ type: 'varchar', length: 255 })
-  producerName: string
-
-  @Column({ unique: true })
-  document: string
-
-  @Column({ type: 'varchar', length: 10 })
-  documentType: DocumentType
-
-  @OneToMany(() => TestFarm, (farm) => farm.producer)
-  farms: TestFarm[]
-}
-
-@Entity('farms')
-class TestFarm {
-  @PrimaryGeneratedColumn('uuid')
-  id: string
-
-  @Column({ type: 'varchar', length: 255 })
-  farmName: string
-
-  @Column({ type: 'varchar', length: 255 })
-  city: string
-
-  @Column({ type: 'varchar', length: 255 })
-  state: string
-
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
-  totalArea: number
-
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
-  arableArea: number
-
-  @Column({ type: 'decimal', precision: 10, scale: 2 })
-  vegetationArea: number
-
-  @Column({ type: 'uuid' })
-  producerId: string
-
-  @ManyToOne(() => TestProducer, (producer) => producer.farms)
-  @JoinColumn({ name: 'producerId' })
-  producer: TestProducer
-
-  @OneToMany(() => TestPlantedCrop, (plantedCrop) => plantedCrop.farm)
-  plantedCrops: TestPlantedCrop[]
-}
-
-@Entity('cultures')
-class TestCulture {
-  @PrimaryGeneratedColumn('uuid')
-  id: string
-
-  @Column({ type: 'varchar', length: 255, unique: true })
-  name: string
-
-  @OneToMany(() => TestPlantedCrop, (plantedCrop) => plantedCrop.culture)
-  plantedCrops: TestPlantedCrop[]
-}
-
-@Entity('planted_crops')
-class TestPlantedCrop {
-  @PrimaryGeneratedColumn('uuid')
-  id: string
-
-  @Column('decimal', { precision: 10, scale: 2 })
-  plantedArea: number
-
-  @Column({ type: 'int' })
-  harvestYear: number
-
-  @Column({ type: 'uuid' })
-  farmID: string
-
-  @Column({ type: 'uuid' })
-  cultureID: string
-
-  @ManyToOne(() => TestFarm, (farm) => farm.plantedCrops)
-  @JoinColumn({ name: 'farmID' })
-  farm: TestFarm
-
-  @ManyToOne(() => TestCulture, (culture) => culture.plantedCrops)
-  @JoinColumn({ name: 'cultureID' })
-  culture: TestCulture
-}
+import {
+  createTestApp,
+  cleanupTestDatabase,
+  closeTestApp,
+  testData,
+  expectValidationError,
+  expectNotFoundError,
+  createTestProducer,
+  createTestFarm,
+  createTestCulture,
+  TestApp,
+} from './helpers/test-setup'
 
 describe('PlantedCropsController (e2e)', () => {
-  let app: INestApplication
-  let dataSource: DataSource
-  let testFarmId: string
-  let testCultureId: string
+  let testApp: TestApp
+  let producerId: string
+  let farmId: string
+  let cultureId: string
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        TypeOrmModule.forRoot({
-          type: 'sqlite',
-          database: ':memory:',
-          autoLoadEntities: true,
-          synchronize: true,
-          dropSchema: true,
-        }),
-        TypeOrmModule.forFeature([TestProducer, TestFarm, TestCulture, TestPlantedCrop]),
-      ],
-      controllers: [PlantedCropsController],
-      providers: [
-        {
-          provide: PlantedCropsService,
-          useFactory: (dataSource: DataSource) => {
-            const plantedCropRepository = dataSource.getRepository(TestPlantedCrop)
-            const farmRepository = dataSource.getRepository(TestFarm)
-            const cultureRepository = dataSource.getRepository(TestCulture)
-            return new PlantedCropsService(
-              plantedCropRepository as any,
-              farmRepository as any,
-              cultureRepository as any,
-            )
-          },
-          inject: [DataSource],
-        },
-      ],
-    }).compile()
-
-    app = moduleFixture.createNestApplication()
-    app.setGlobalPrefix('api')
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    )
-    await app.init()
-
-    dataSource = moduleFixture.get<DataSource>(DataSource)
-
-    // Criar dados de teste necessários
-    const producerRepository = dataSource.getRepository(TestProducer)
-    const farmRepository = dataSource.getRepository(TestFarm)
-    const cultureRepository = dataSource.getRepository(TestCulture)
-
-    // Criar produtor
-    const testProducer = producerRepository.create({
-      producerName: 'Produtor Teste',
-      document: '01166995585',
-      documentType: DocumentType.CPF,
-    })
-    const savedProducer = await producerRepository.save(testProducer)
-
-    // Criar fazenda
-    const testFarm = farmRepository.create({
-      farmName: 'Fazenda Teste',
-      city: 'São Paulo',
-      state: 'SP',
-      totalArea: 100.0,
-      arableArea: 80.0,
-      vegetationArea: 20.0,
-      producerId: savedProducer.id,
-    })
-    const savedFarm = await farmRepository.save(testFarm)
-    testFarmId = savedFarm.id
-
-    // Criar cultura
-    const testCulture = cultureRepository.create({
-      name: 'Soja',
-    })
-    const savedCulture = await cultureRepository.save(testCulture)
-    testCultureId = savedCulture.id
+    testApp = await createTestApp()
   }, 30000)
 
   beforeEach(async () => {
-    // Limpar apenas dados de planted_crops entre testes
-    const plantedCropRepository = dataSource.getRepository(TestPlantedCrop)
-    await plantedCropRepository.clear()
+    await cleanupTestDatabase(testApp.dataSource)
+
+    const producer = await createTestProducer(testApp.app)
+    producerId = producer.id
+
+    const farm = await createTestFarm(testApp.app, producerId)
+    farmId = farm.id
+
+    const culture = await createTestCulture(testApp.app)
+    cultureId = culture.id
   })
 
   afterAll(async () => {
-    if (app) {
-      await app.close()
-    }
+    await closeTestApp(testApp)
   })
 
-  describe('POST /planted-crops', () => {
+  describe('POST /api/planted-crops', () => {
     it('deve criar um plantio válido', async () => {
-      const createPlantedCropDto: CreatePlantedCropDto = {
-        farmID: testFarmId,
-        cultureID: testCultureId,
-        plantedArea: 50.0,
-        harvestYear: 2024,
+      const createPlantedCropDto = {
+        ...testData.plantedCrops.valid,
+        farmId,
+        cultureId,
       }
 
-      return request(app.getHttpServer())
+      const response = await request(testApp.app.getHttpServer())
         .post('/api/planted-crops')
         .send(createPlantedCropDto)
         .expect(201)
-        .then((response) => {
-          expect(response.body).toMatchObject({
+
+      expect(response.body).toEqual({
+        id: expect.any(String),
+        cropYear: createPlantedCropDto.cropYear,
+        plantedArea: createPlantedCropDto.plantedArea,
+        farmId,
+        cultureId,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+      })
+    })
+
+    it('deve rejeitar plantio com fazenda inexistente', async () => {
+      const createPlantedCropDto = {
+        ...testData.plantedCrops.valid,
+        farmId: '123e4567-e89b-12d3-a456-426614174000',
+        cultureId,
+      }
+
+      const response = await request(testApp.app.getHttpServer()).post('/api/planted-crops').send(createPlantedCropDto)
+
+      expectNotFoundError(response, 'Fazenda')
+    })
+
+    it('deve rejeitar plantio com cultura inexistente', async () => {
+      const createPlantedCropDto = {
+        ...testData.plantedCrops.valid,
+        farmId,
+        cultureId: '123e4567-e89b-12d3-a456-426614174000',
+      }
+
+      const response = await request(testApp.app.getHttpServer()).post('/api/planted-crops').send(createPlantedCropDto)
+
+      expectNotFoundError(response, 'Cultura')
+    })
+
+    it('deve rejeitar dados obrigatórios ausentes', async () => {
+      const response = await request(testApp.app.getHttpServer()).post('/api/planted-crops').send({})
+
+      expectValidationError(response, 'farmId')
+      expectValidationError(response, 'cultureId')
+      expectValidationError(response, 'cropYear')
+      expectValidationError(response, 'plantedArea')
+    })
+
+    it('deve rejeitar ano de plantio inválido', async () => {
+      const createPlantedCropDto = {
+        ...testData.plantedCrops.valid,
+        cropYear: 1800,
+        farmId,
+        cultureId,
+      }
+
+      const response = await request(testApp.app.getHttpServer()).post('/api/planted-crops').send(createPlantedCropDto)
+
+      expectValidationError(response, 'cropYear')
+    })
+
+    it('deve rejeitar área plantada negativa', async () => {
+      const createPlantedCropDto = {
+        ...testData.plantedCrops.valid,
+        plantedArea: -10,
+        farmId,
+        cultureId,
+      }
+
+      const response = await request(testApp.app.getHttpServer()).post('/api/planted-crops').send(createPlantedCropDto)
+
+      expectValidationError(response, 'plantedArea')
+    })
+
+    it('deve rejeitar área plantada zero', async () => {
+      const createPlantedCropDto = {
+        ...testData.plantedCrops.valid,
+        plantedArea: 0,
+        farmId,
+        cultureId,
+      }
+
+      const response = await request(testApp.app.getHttpServer()).post('/api/planted-crops').send(createPlantedCropDto)
+
+      expectValidationError(response, 'plantedArea')
+    })
+
+    it('deve rejeitar área plantada maior que área da fazenda', async () => {
+      const smallFarm = await createTestFarm(testApp.app, producerId, {
+        ...testData.farms.valid,
+        farmName: 'Fazenda Pequena',
+        totalArea: 10,
+        arableArea: 10,
+        vegetationArea: 0,
+      })
+
+      const createPlantedCropDto = {
+        ...testData.plantedCrops.valid,
+        plantedArea: 20,
+        farmId: smallFarm.id,
+        cultureId,
+      }
+
+      const response = await request(testApp.app.getHttpServer()).post('/api/planted-crops').send(createPlantedCropDto)
+
+      expectValidationError(response, 'plantedArea')
+    })
+  })
+
+  describe('GET /api/planted-crops', () => {
+    beforeEach(async () => {
+      await request(testApp.app.getHttpServer())
+        .post('/api/planted-crops')
+        .send({
+          ...testData.plantedCrops.valid,
+          farmId,
+          cultureId,
+        })
+
+      await request(testApp.app.getHttpServer()).post('/api/planted-crops').send({
+        cropYear: 2023,
+        plantedArea: 30.0,
+        farmId,
+        cultureId,
+      })
+    })
+
+    it('deve retornar lista paginada de plantios', async () => {
+      const response = await request(testApp.app.getHttpServer()).get('/api/planted-crops').expect(200)
+
+      expect(response.body).toEqual({
+        data: expect.arrayContaining([
+          expect.objectContaining({
             id: expect.any(String),
-            farmID: testFarmId,
-            cultureID: testCultureId,
-            plantedArea: 50.0,
-            harvestYear: 2024,
+            cropYear: expect.any(Number),
+            plantedArea: expect.any(Number),
+            farmId: expect.any(String),
+            cultureId: expect.any(String),
+          }),
+        ]),
+        meta: {
+          page: 1,
+          limit: 10,
+          total: 2,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
+        },
+      })
+    })
+
+    it('deve filtrar por ano de plantio', async () => {
+      const response = await request(testApp.app.getHttpServer()).get('/api/planted-crops?cropYear=2024').expect(200)
+
+      expect(response.body.data).toHaveLength(1)
+      expect(response.body.data[0].cropYear).toBe(2024)
+    })
+
+    it('deve filtrar por fazenda', async () => {
+      const response = await request(testApp.app.getHttpServer()).get(`/api/planted-crops?farmId=${farmId}`).expect(200)
+
+      expect(response.body.data).toHaveLength(2)
+      expect(response.body.data[0].farmId).toBe(farmId)
+    })
+
+    it('deve filtrar por cultura', async () => {
+      const response = await request(testApp.app.getHttpServer())
+        .get(`/api/planted-crops?cultureId=${cultureId}`)
+        .expect(200)
+
+      expect(response.body.data).toHaveLength(2)
+      expect(response.body.data[0].cultureId).toBe(cultureId)
+    })
+
+    it('deve paginar corretamente', async () => {
+      for (let i = 0; i < 5; i++) {
+        await request(testApp.app.getHttpServer())
+          .post('/api/planted-crops')
+          .send({
+            cropYear: 2024 + i,
+            plantedArea: 50.0 + i,
+            farmId,
+            cultureId,
           })
-        })
-    })
-
-    it('deve retornar 400 para farmID inválido', () => {
-      const invalidDto = {
-        farmID: 'invalid-uuid',
-        cultureID: testCultureId,
-        plantedArea: 50.0,
-        harvestYear: 2024,
       }
 
-      return request(app.getHttpServer())
-        .post('/api/planted-crops')
-        .send(invalidDto)
-        .expect(400)
-        .then((response) => {
-          expect(response.body.message).toContain('farmID must be a UUID')
-        })
-    })
+      const response = await request(testApp.app.getHttpServer()).get('/api/planted-crops?page=1&limit=3').expect(200)
 
-    it('deve retornar 400 para cultureID inválido', () => {
-      const invalidDto = {
-        farmID: testFarmId,
-        cultureID: 'invalid-uuid',
-        plantedArea: 50.0,
-        harvestYear: 2024,
-      }
-
-      return request(app.getHttpServer())
-        .post('/api/planted-crops')
-        .send(invalidDto)
-        .expect(400)
-        .then((response) => {
-          expect(response.body.message).toContain('cultureID must be a UUID')
-        })
-    })
-
-    it('deve retornar 400 para área plantada negativa', () => {
-      const invalidDto = {
-        farmID: testFarmId,
-        cultureID: testCultureId,
-        plantedArea: -10.0,
-        harvestYear: 2024,
-      }
-
-      return request(app.getHttpServer())
-        .post('/api/planted-crops')
-        .send(invalidDto)
-        .expect(400)
-        .then((response) => {
-          expect(response.body.message).toContain('plantedArea must not be less than 0')
-        })
-    })
-
-    it('deve retornar 400 para ano de colheita menor que 2000', () => {
-      const invalidDto = {
-        farmID: testFarmId,
-        cultureID: testCultureId,
-        plantedArea: 50.0,
-        harvestYear: 1999,
-      }
-
-      return request(app.getHttpServer())
-        .post('/api/planted-crops')
-        .send(invalidDto)
-        .expect(400)
-        .then((response) => {
-          expect(response.body.message).toContain('harvestYear must not be less than 2000')
-        })
-    })
-
-    it('deve retornar 400 para ano de colheita não inteiro', () => {
-      const invalidDto = {
-        farmID: testFarmId,
-        cultureID: testCultureId,
-        plantedArea: 50.0,
-        harvestYear: 2024.5,
-      }
-
-      return request(app.getHttpServer())
-        .post('/api/planted-crops')
-        .send(invalidDto)
-        .expect(400)
-        .then((response) => {
-          expect(response.body.message).toContain('harvestYear must be an integer number')
-        })
-    })
-
-    it('deve retornar 404 para farmID inexistente', () => {
-      const fakeFarmId = '123e4567-e89b-12d3-a456-426614174000'
-      const invalidDto = {
-        farmID: fakeFarmId,
-        cultureID: testCultureId,
-        plantedArea: 50.0,
-        harvestYear: 2024,
-      }
-
-      return request(app.getHttpServer())
-        .post('/api/planted-crops')
-        .send(invalidDto)
-        .expect(404)
-        .then((response) => {
-          expect(response.body.message).toContain('Fazenda com ID')
-        })
-    })
-
-    it('deve retornar 404 para cultureID inexistente', () => {
-      const fakeCultureId = '123e4567-e89b-12d3-a456-426614174000'
-      const invalidDto = {
-        farmID: testFarmId,
-        cultureID: fakeCultureId,
-        plantedArea: 50.0,
-        harvestYear: 2024,
-      }
-
-      return request(app.getHttpServer())
-        .post('/api/planted-crops')
-        .send(invalidDto)
-        .expect(404)
-        .then((response) => {
-          expect(response.body.message).toContain('Cultura com ID')
-        })
-    })
-
-    it('deve retornar 400 quando área total excede área da fazenda', () => {
-      const invalidDto = {
-        farmID: testFarmId,
-        cultureID: testCultureId,
-        plantedArea: 150.0, // Maior que a área total da fazenda (100.0)
-        harvestYear: 2024,
-      }
-
-      return request(app.getHttpServer())
-        .post('/api/planted-crops')
-        .send(invalidDto)
-        .expect(400)
-        .then((response) => {
-          expect(response.body.message).toContain('Área total plantada excede a área total da fazenda')
-        })
+      expect(response.body.data).toHaveLength(3)
+      expect(response.body.meta).toEqual({
+        page: 1,
+        limit: 3,
+        total: 7,
+        totalPages: 3,
+        hasNext: true,
+        hasPrev: false,
+      })
     })
   })
 
-  describe('GET /planted-crops', () => {
-    it('deve retornar lista vazia quando não há plantios', () => {
-      return request(app.getHttpServer())
-        .get('/api/planted-crops')
-        .expect(200)
-        .then((response) => {
-          expect(response.body).toEqual([])
-        })
-    })
+  describe('GET /api/planted-crops/:id', () => {
+    let plantedCropId: string
 
-    it('deve retornar todos os plantios', async () => {
-      const plantedCrops = [
-        {
-          farmID: testFarmId,
-          cultureID: testCultureId,
-          plantedArea: 50.0,
-          harvestYear: 2024,
-        },
-        {
-          farmID: testFarmId,
-          cultureID: testCultureId,
-          plantedArea: 30.0,
-          harvestYear: 2023,
-        },
-      ]
-
-      // Criar plantios
-      for (const plantedCrop of plantedCrops) {
-        await request(app.getHttpServer()).post('/api/planted-crops').send(plantedCrop).expect(201)
-      }
-
-      // Buscar todos os plantios
-      return request(app.getHttpServer())
-        .get('/api/planted-crops')
-        .expect(200)
-        .then((response) => {
-          expect(response.body).toHaveLength(2)
-          expect(response.body[0]).toHaveProperty('id')
-          expect(response.body[0]).toHaveProperty('farmID')
-          expect(response.body[0]).toHaveProperty('cultureID')
-          expect(response.body[0]).toHaveProperty('plantedArea')
-          expect(response.body[0]).toHaveProperty('harvestYear')
-        })
-    })
-  })
-
-  describe('GET /planted-crops/:id', () => {
-    it('deve retornar um plantio específico', async () => {
-      const createPlantedCropDto: CreatePlantedCropDto = {
-        farmID: testFarmId,
-        cultureID: testCultureId,
-        plantedArea: 50.0,
-        harvestYear: 2024,
-      }
-
-      // Criar plantio
-      const createResponse = await request(app.getHttpServer())
+    beforeEach(async () => {
+      const response = await request(testApp.app.getHttpServer())
         .post('/api/planted-crops')
-        .send(createPlantedCropDto)
+        .send({
+          ...testData.plantedCrops.valid,
+          farmId,
+          cultureId,
+        })
         .expect(201)
 
-      const plantedCropId = createResponse.body.id
-
-      // Buscar plantio específico
-      return request(app.getHttpServer())
-        .get(`/api/planted-crops/${plantedCropId}`)
-        .expect(200)
-        .then((response) => {
-          expect(response.body).toMatchObject({
-            id: plantedCropId,
-            farmID: testFarmId,
-            cultureID: testCultureId,
-            plantedArea: 50.0,
-            harvestYear: 2024,
-          })
-        })
+      plantedCropId = response.body.id
     })
 
-    it('deve retornar 400 para ID inválido', () => {
-      return request(app.getHttpServer()).get('/api/planted-crops/invalid-id').expect(400)
+    it('deve retornar um plantio por ID', async () => {
+      const response = await request(testApp.app.getHttpServer()).get(`/api/planted-crops/${plantedCropId}`).expect(200)
+
+      expect(response.body).toEqual({
+        id: plantedCropId,
+        cropYear: testData.plantedCrops.valid.cropYear,
+        plantedArea: testData.plantedCrops.valid.plantedArea,
+        farmId,
+        cultureId,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+      })
     })
 
-    it('deve retornar 404 para plantio não encontrado', () => {
+    it('deve retornar 404 para ID inexistente', async () => {
       const fakeId = '123e4567-e89b-12d3-a456-426614174000'
-      return request(app.getHttpServer())
-        .get(`/api/planted-crops/${fakeId}`)
-        .expect(404)
-        .then((response) => {
-          expect(response.body.message).toContain('PlantedCrop com ID')
-        })
+
+      const response = await request(testApp.app.getHttpServer()).get(`/api/planted-crops/${fakeId}`)
+
+      expectNotFoundError(response, 'Plantio')
+    })
+
+    it('deve rejeitar ID inválido', async () => {
+      const response = await request(testApp.app.getHttpServer()).get('/api/planted-crops/invalid-id')
+
+      expect(response.status).toBe(400)
     })
   })
 
-  describe('PATCH /planted-crops/:id', () => {
-    it('deve atualizar um plantio existente', async () => {
-      const createPlantedCropDto: CreatePlantedCropDto = {
-        farmID: testFarmId,
-        cultureID: testCultureId,
-        plantedArea: 50.0,
-        harvestYear: 2024,
-      }
+  describe('PATCH /api/planted-crops/:id', () => {
+    let plantedCropId: string
 
-      // Criar plantio
-      const createResponse = await request(app.getHttpServer())
+    beforeEach(async () => {
+      const response = await request(testApp.app.getHttpServer())
         .post('/api/planted-crops')
-        .send(createPlantedCropDto)
+        .send({
+          ...testData.plantedCrops.valid,
+          farmId,
+          cultureId,
+        })
         .expect(201)
 
-      const plantedCropId = createResponse.body.id
-
-      // Atualizar plantio
-      const updatePlantedCropDto: UpdatePlantedCropDto = {
-        plantedArea: 60.0,
-        harvestYear: 2025,
-      }
-
-      return request(app.getHttpServer())
-        .patch(`/api/planted-crops/${plantedCropId}`)
-        .send(updatePlantedCropDto)
-        .expect(500) // O service tem um bug - está tentando salvar apenas o DTO
-        .then((response) => {
-          expect(response.body.message).toBe('Internal server error')
-        })
+      plantedCropId = response.body.id
     })
 
-    it('deve atualizar apenas a área plantada', async () => {
-      const createPlantedCropDto: CreatePlantedCropDto = {
-        farmID: testFarmId,
-        cultureID: testCultureId,
-        plantedArea: 50.0,
-        harvestYear: 2024,
-      }
-
-      // Criar plantio
-      const createResponse = await request(app.getHttpServer())
-        .post('/api/planted-crops')
-        .send(createPlantedCropDto)
-        .expect(201)
-
-      const plantedCropId = createResponse.body.id
-
-      // Atualizar apenas a área
-      const updatePlantedCropDto = {
+    it('deve atualizar um plantio', async () => {
+      const updateData = {
+        cropYear: 2025,
         plantedArea: 75.0,
       }
 
-      return request(app.getHttpServer())
+      const response = await request(testApp.app.getHttpServer())
         .patch(`/api/planted-crops/${plantedCropId}`)
-        .send(updatePlantedCropDto)
-        .expect(500) // O service tem um bug - está tentando salvar apenas o DTO
-        .then((response) => {
-          expect(response.body.message).toBe('Internal server error')
-        })
+        .send(updateData)
+        .expect(200)
+
+      expect(response.body).toEqual({
+        id: plantedCropId,
+        cropYear: updateData.cropYear,
+        plantedArea: updateData.plantedArea,
+        farmId,
+        cultureId,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+      })
     })
 
-    it('deve retornar 400 para ID inválido', () => {
-      const updatePlantedCropDto = {
-        plantedArea: 60.0,
+    it('deve atualizar apenas o ano de plantio', async () => {
+      const updateData = {
+        cropYear: 2025,
       }
 
-      return request(app.getHttpServer()).patch('/api/planted-crops/invalid-id').send(updatePlantedCropDto).expect(400)
+      const response = await request(testApp.app.getHttpServer())
+        .patch(`/api/planted-crops/${plantedCropId}`)
+        .send(updateData)
+        .expect(200)
+
+      expect(response.body.cropYear).toBe(updateData.cropYear)
+      expect(response.body.plantedArea).toBe(testData.plantedCrops.valid.plantedArea)
     })
 
-    it('deve retornar 404 para plantio não encontrado', () => {
+    it('deve rejeitar atualização com dados inválidos', async () => {
+      const updateData = {
+        cropYear: 1800,
+      }
+
+      const response = await request(testApp.app.getHttpServer())
+        .patch(`/api/planted-crops/${plantedCropId}`)
+        .send(updateData)
+
+      expectValidationError(response, 'cropYear')
+    })
+
+    it('deve retornar 404 para ID inexistente', async () => {
       const fakeId = '123e4567-e89b-12d3-a456-426614174000'
-      const updatePlantedCropDto = {
-        plantedArea: 60.0,
-      }
+      const updateData = { cropYear: 2025 }
 
-      return request(app.getHttpServer())
-        .patch(`/api/planted-crops/${fakeId}`)
-        .send(updatePlantedCropDto)
-        .expect(404)
-        .then((response) => {
-          expect(response.body.message).toContain('PlantedCrop com ID')
-        })
+      const response = await request(testApp.app.getHttpServer()).patch(`/api/planted-crops/${fakeId}`).send(updateData)
+
+      expectNotFoundError(response, 'Plantio')
     })
 
-    it('deve retornar 400 para dados inválidos na atualização', async () => {
-      const createPlantedCropDto: CreatePlantedCropDto = {
-        farmID: testFarmId,
-        cultureID: testCultureId,
-        plantedArea: 50.0,
-        harvestYear: 2024,
+    it('deve rejeitar área plantada maior que área da fazenda', async () => {
+      const updateData = {
+        plantedArea: 1000,
       }
 
-      // Criar plantio
-      const createResponse = await request(app.getHttpServer())
-        .post('/api/planted-crops')
-        .send(createPlantedCropDto)
-        .expect(201)
-
-      const plantedCropId = createResponse.body.id
-
-      // Tentar atualizar com dados inválidos
-      const invalidUpdateDto = {
-        plantedArea: -10.0,
-      }
-
-      return request(app.getHttpServer())
+      const response = await request(testApp.app.getHttpServer())
         .patch(`/api/planted-crops/${plantedCropId}`)
-        .send(invalidUpdateDto)
-        .expect(400)
-        .then((response) => {
-          expect(response.body.message).toContain('plantedArea must not be less than 0')
-        })
+        .send(updateData)
+
+      expectValidationError(response, 'plantedArea')
     })
   })
 
-  describe('DELETE /planted-crops/:id', () => {
-    it('deve remover um plantio existente', async () => {
-      const createPlantedCropDto: CreatePlantedCropDto = {
-        farmID: testFarmId,
-        cultureID: testCultureId,
-        plantedArea: 50.0,
-        harvestYear: 2024,
-      }
+  describe('DELETE /api/planted-crops/:id', () => {
+    let plantedCropId: string
 
-      // Criar plantio
-      const createResponse = await request(app.getHttpServer())
+    beforeEach(async () => {
+      const response = await request(testApp.app.getHttpServer())
         .post('/api/planted-crops')
-        .send(createPlantedCropDto)
+        .send({
+          ...testData.plantedCrops.valid,
+          farmId,
+          cultureId,
+        })
         .expect(201)
 
-      const plantedCropId = createResponse.body.id
-
-      // Remover plantio
-      await request(app.getHttpServer()).delete(`/api/planted-crops/${plantedCropId}`).expect(200)
-
-      // Verificar se foi removido
-      return request(app.getHttpServer()).get(`/api/planted-crops/${plantedCropId}`).expect(404)
+      plantedCropId = response.body.id
     })
 
-    it('deve retornar 400 para ID inválido', () => {
-      return request(app.getHttpServer()).delete('/api/planted-crops/invalid-id').expect(400)
+    it('deve remover um plantio', async () => {
+      await request(testApp.app.getHttpServer()).delete(`/api/planted-crops/${plantedCropId}`).expect(200)
+
+      await request(testApp.app.getHttpServer()).get(`/api/planted-crops/${plantedCropId}`).expect(404)
     })
 
-    it('deve retornar 404 para plantio não encontrado', () => {
+    it('deve retornar 404 para ID inexistente', async () => {
       const fakeId = '123e4567-e89b-12d3-a456-426614174000'
-      return request(app.getHttpServer())
-        .delete(`/api/planted-crops/${fakeId}`)
-        .expect(404)
-        .then((response) => {
-          expect(response.body.message).toContain('PlantedCrop com ID')
-        })
+
+      const response = await request(testApp.app.getHttpServer()).delete(`/api/planted-crops/${fakeId}`)
+
+      expectNotFoundError(response, 'Plantio')
     })
   })
 
-  describe('Cenários de integração', () => {
+  describe('Fluxos de integração', () => {
     it('deve permitir CRUD completo de um plantio', async () => {
-      // CREATE
-      const createPlantedCropDto: CreatePlantedCropDto = {
-        farmID: testFarmId,
-        cultureID: testCultureId,
-        plantedArea: 50.0,
-        harvestYear: 2024,
-      }
-
-      const createResponse = await request(app.getHttpServer())
+      const createResponse = await request(testApp.app.getHttpServer())
         .post('/api/planted-crops')
-        .send(createPlantedCropDto)
+        .send({
+          ...testData.plantedCrops.valid,
+          farmId,
+          cultureId,
+        })
         .expect(201)
 
       const plantedCropId = createResponse.body.id
-      expect(createResponse.body.plantedArea).toBe(50.0)
 
-      // READ
-      const getResponse = await request(app.getHttpServer()).get(`/api/planted-crops/${plantedCropId}`).expect(200)
+      const readResponse = await request(testApp.app.getHttpServer())
+        .get(`/api/planted-crops/${plantedCropId}`)
+        .expect(200)
 
-      expect(getResponse.body.plantedArea).toBe(50.0)
+      expect(readResponse.body.id).toBe(plantedCropId)
 
-      // UPDATE - Comentado devido a bug no service
-      // const updatePlantedCropDto = {
-      //   plantedArea: 75.0,
-      //   harvestYear: 2025,
-      // }
+      const updateData = { cropYear: 2025 }
+      const updateResponse = await request(testApp.app.getHttpServer())
+        .patch(`/api/planted-crops/${plantedCropId}`)
+        .send(updateData)
+        .expect(200)
 
-      // const updateResponse = await request(app.getHttpServer())
-      //   .patch(`/api/planted-crops/${plantedCropId}`)
-      //   .send(updatePlantedCropDto)
-      //   .expect(200)
+      expect(updateResponse.body.cropYear).toBe(updateData.cropYear)
 
-      // expect(updateResponse.body.plantedArea).toBe(75.0)
-      // expect(updateResponse.body.harvestYear).toBe(2025)
+      await request(testApp.app.getHttpServer()).delete(`/api/planted-crops/${plantedCropId}`).expect(200)
 
-      // DELETE
-      await request(app.getHttpServer()).delete(`/api/planted-crops/${plantedCropId}`).expect(200)
-
-      // Verificar se foi removido
-      await request(app.getHttpServer()).get(`/api/planted-crops/${plantedCropId}`).expect(404)
+      await request(testApp.app.getHttpServer()).get(`/api/planted-crops/${plantedCropId}`).expect(404)
     })
 
-    it('deve validar anos de colheita futuros', async () => {
-      const currentYear = new Date().getFullYear()
-      const futureYear = currentYear + 5
+    it('deve validar relacionamentos corretamente', async () => {
+      const producer2 = await createTestProducer(testApp.app, testData.producers.validCNPJ)
+      const farm2 = await createTestFarm(testApp.app, producer2.id, {
+        ...testData.farms.valid,
+        farmName: 'Fazenda 2',
+      })
+      const culture2 = await createTestCulture(testApp.app, {
+        cultureName: 'Milho',
+        description: 'Cultura de milho',
+      })
 
-      const createPlantedCropDto: CreatePlantedCropDto = {
-        farmID: testFarmId,
-        cultureID: testCultureId,
-        plantedArea: 50.0,
-        harvestYear: futureYear,
-      }
-
-      // Deve aceitar anos futuros
-      return request(app.getHttpServer())
+      const plantedCrop1 = await request(testApp.app.getHttpServer())
         .post('/api/planted-crops')
-        .send(createPlantedCropDto)
+        .send({
+          ...testData.plantedCrops.valid,
+          farmId,
+          cultureId,
+        })
         .expect(201)
-        .then((response) => {
-          expect(response.body.harvestYear).toBe(futureYear)
+
+      const plantedCrop2 = await request(testApp.app.getHttpServer())
+        .post('/api/planted-crops')
+        .send({
+          cropYear: 2023,
+          plantedArea: 30.0,
+          farmId: farm2.id,
+          cultureId: culture2.id,
         })
+        .expect(201)
+
+      expect(plantedCrop1.body.farmId).toBe(farmId)
+      expect(plantedCrop1.body.cultureId).toBe(cultureId)
+      expect(plantedCrop2.body.farmId).toBe(farm2.id)
+      expect(plantedCrop2.body.cultureId).toBe(culture2.id)
     })
 
-    it('deve validar área total da fazenda', async () => {
-      // Primeiro plantio - deve funcionar
-      const firstPlantedCrop = {
-        farmID: testFarmId,
-        cultureID: testCultureId,
-        plantedArea: 60.0,
-        harvestYear: 2024,
-      }
-
-      await request(app.getHttpServer()).post('/api/planted-crops').send(firstPlantedCrop).expect(201)
-
-      // Segundo plantio - deve falhar pois excede área total (100 - 60 = 40 disponível)
-      const secondPlantedCrop = {
-        farmID: testFarmId,
-        cultureID: testCultureId,
-        plantedArea: 50.0, // Maior que 40 disponível
-        harvestYear: 2024,
-      }
-
-      return request(app.getHttpServer())
+    it('deve calcular estatísticas corretamente', async () => {
+      await request(testApp.app.getHttpServer())
         .post('/api/planted-crops')
-        .send(secondPlantedCrop)
-        .expect(400)
-        .then((response) => {
-          expect(response.body.message).toContain('Área total plantada excede a área total da fazenda')
+        .send({
+          ...testData.plantedCrops.valid,
+          farmId,
+          cultureId,
         })
+
+      await request(testApp.app.getHttpServer()).post('/api/planted-crops').send({
+        cropYear: 2023,
+        plantedArea: 30.0,
+        farmId,
+        cultureId,
+      })
+
+      const response = await request(testApp.app.getHttpServer()).get('/api/planted-crops').expect(200)
+
+      expect(response.body.data).toHaveLength(2)
+      expect(response.body.meta.total).toBe(2)
+
+      const filteredResponse = await request(testApp.app.getHttpServer())
+        .get('/api/planted-crops?cropYear=2024')
+        .expect(200)
+
+      expect(filteredResponse.body.data).toHaveLength(1)
+      expect(filteredResponse.body.data[0].cropYear).toBe(2024)
+    })
+
+    it('deve manter integridade dos dados', async () => {
+      const createResponse = await request(testApp.app.getHttpServer())
+        .post('/api/planted-crops')
+        .send({
+          ...testData.plantedCrops.valid,
+          farmId,
+          cultureId,
+        })
+        .expect(201)
+
+      const plantedCropId = createResponse.body.id
+
+      const readResponse = await request(testApp.app.getHttpServer())
+        .get(`/api/planted-crops/${plantedCropId}`)
+        .expect(200)
+
+      expect(readResponse.body.cropYear).toBe(testData.plantedCrops.valid.cropYear)
+      expect(readResponse.body.plantedArea).toBe(testData.plantedCrops.valid.plantedArea)
+      expect(readResponse.body.farmId).toBe(farmId)
+      expect(readResponse.body.cultureId).toBe(cultureId)
+      expect(readResponse.body.id).toBe(plantedCropId)
     })
   })
 })

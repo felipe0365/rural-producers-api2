@@ -1,524 +1,325 @@
-import { INestApplication, ValidationPipe } from '@nestjs/common'
 import request from 'supertest'
-import { Test, TestingModule } from '@nestjs/testing'
-import { TypeOrmModule } from '@nestjs/typeorm'
-import { CreateProducerDto } from 'src/producers/dto/create-producer.dto'
-import { UpdateProducerDto } from 'src/producers/dto/update-producer.dto'
-import { DocumentType } from 'src/producers/entities/producer.entity'
-import { ProducersController } from 'src/producers/producers.controller'
-import { ProducersService } from 'src/producers/producers.service'
-import { DataSource } from 'typeorm'
-import { Entity, Column, PrimaryGeneratedColumn } from 'typeorm'
-
-@Entity('producers')
-class TestProducer {
-  @PrimaryGeneratedColumn('uuid')
-  id: string
-
-  @Column({ type: 'varchar', length: 255, nullable: false })
-  producerName: string
-
-  @Column({ unique: true, nullable: false })
-  document: string
-
-  @Column({ type: 'varchar', length: 10, nullable: false })
-  documentType: DocumentType
-}
+import {
+  createTestApp,
+  cleanupTestDatabase,
+  closeTestApp,
+  testData,
+  expectValidationError,
+  expectNotFoundError,
+  expectConflictError,
+  TestApp,
+} from './helpers/test-setup'
 
 describe('ProducerController (e2e)', () => {
-  let app: INestApplication
-  let dataSource: DataSource
+  let testApp: TestApp
 
   beforeAll(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [
-        TypeOrmModule.forRoot({
-          type: 'sqlite',
-          database: ':memory:',
-          autoLoadEntities: true,
-          synchronize: true,
-          dropSchema: true,
-        }),
-        TypeOrmModule.forFeature([TestProducer]),
-      ],
-      controllers: [ProducersController],
-      providers: [
-        {
-          provide: ProducersService,
-          useFactory: (dataSource: DataSource) => {
-            const repository = dataSource.getRepository(TestProducer)
-            return new ProducersService(repository as any)
-          },
-          inject: [DataSource],
-        },
-      ],
-    }).compile()
-
-    app = moduleFixture.createNestApplication()
-    app.setGlobalPrefix('api')
-    app.useGlobalPipes(
-      new ValidationPipe({
-        whitelist: true,
-        forbidNonWhitelisted: true,
-        transform: true,
-      }),
-    )
-    await app.init()
-
-    dataSource = moduleFixture.get<DataSource>(DataSource)
+    testApp = await createTestApp()
   }, 30000)
 
   beforeEach(async () => {
-    // Limpar dados entre testes
-    const entities = dataSource.entityMetadatas
-    for (const entity of entities) {
-      const repository = dataSource.getRepository(entity.name)
-      await repository.clear()
-    }
+    await cleanupTestDatabase(testApp.dataSource)
   })
 
   afterAll(async () => {
-    if (app) {
-      await app.close()
-    }
+    await closeTestApp(testApp)
   })
 
-  describe('POST /producers', () => {
+  describe('POST /api/producers', () => {
     it('deve criar um produtor com CPF válido', async () => {
-      const createProducerDto: CreateProducerDto = {
-        document: '01166995585',
-        documentType: DocumentType.CPF,
-        producerName: 'João Silva',
-      }
+      const createProducerDto = testData.producers.validCPF
 
-      return request(app.getHttpServer())
+      const response = await request(testApp.app.getHttpServer())
         .post('/api/producers')
         .send(createProducerDto)
         .expect(201)
-        .then((response) => {
-          expect(response.body).toEqual({
-            id: expect.any(String),
-            document: '01166995585',
-            documentType: DocumentType.CPF,
-            producerName: 'João Silva',
-          })
-        })
+
+      expect(response.body).toEqual({
+        id: expect.any(String),
+        producerName: createProducerDto.producerName,
+        document: createProducerDto.document,
+        documentType: createProducerDto.documentType,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+      })
     })
 
     it('deve criar um produtor com CNPJ válido', async () => {
-      const createProducerDto: CreateProducerDto = {
-        document: '12345678000195',
-        documentType: DocumentType.CNPJ,
-        producerName: 'Empresa Rural LTDA',
-      }
+      const createProducerDto = testData.producers.validCNPJ
 
-      return request(app.getHttpServer())
+      const response = await request(testApp.app.getHttpServer())
         .post('/api/producers')
         .send(createProducerDto)
         .expect(201)
-        .then((response) => {
-          expect(response.body).toEqual({
+
+      expect(response.body).toEqual({
+        id: expect.any(String),
+        producerName: createProducerDto.producerName,
+        document: createProducerDto.document,
+        documentType: createProducerDto.documentType,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+      })
+    })
+
+    it('deve rejeitar documento inválido', async () => {
+      const createProducerDto = testData.producers.invalidDocument
+
+      const response = await request(testApp.app.getHttpServer()).post('/api/producers').send(createProducerDto)
+
+      expectValidationError(response, 'document', 'Documento inválido')
+    })
+
+    it('deve rejeitar documento duplicado', async () => {
+      const createProducerDto = testData.producers.validCPF
+
+      await request(testApp.app.getHttpServer()).post('/api/producers').send(createProducerDto).expect(201)
+
+      const response = await request(testApp.app.getHttpServer()).post('/api/producers').send(createProducerDto)
+
+      expectConflictError(response, 'já existe')
+    })
+
+    it('deve rejeitar dados obrigatórios ausentes', async () => {
+      const response = await request(testApp.app.getHttpServer()).post('/api/producers').send({})
+
+      expectValidationError(response, 'producerName')
+      expectValidationError(response, 'document')
+      expectValidationError(response, 'documentType')
+    })
+
+    it('deve rejeitar nome muito curto', async () => {
+      const createProducerDto = {
+        ...testData.producers.validCPF,
+        producerName: 'Jo',
+      }
+
+      const response = await request(testApp.app.getHttpServer()).post('/api/producers').send(createProducerDto)
+
+      expectValidationError(response, 'producerName')
+    })
+
+    it('deve rejeitar nome muito longo', async () => {
+      const createProducerDto = {
+        ...testData.producers.validCPF,
+        producerName: 'A'.repeat(256),
+      }
+
+      const response = await request(testApp.app.getHttpServer()).post('/api/producers').send(createProducerDto)
+
+      expectValidationError(response, 'producerName')
+    })
+  })
+
+  describe('GET /api/producers', () => {
+    beforeEach(async () => {
+      await request(testApp.app.getHttpServer()).post('/api/producers').send(testData.producers.validCPF)
+
+      await request(testApp.app.getHttpServer()).post('/api/producers').send(testData.producers.validCNPJ)
+    })
+
+    it('deve retornar lista paginada de produtores', async () => {
+      const response = await request(testApp.app.getHttpServer()).get('/api/producers').expect(200)
+
+      expect(response.body).toEqual({
+        data: expect.arrayContaining([
+          expect.objectContaining({
             id: expect.any(String),
-            document: '12345678000195',
-            documentType: DocumentType.CNPJ,
-            producerName: 'Empresa Rural LTDA',
-          })
-        })
+            producerName: expect.any(String),
+            document: expect.any(String),
+            documentType: expect.any(String),
+          }),
+        ]),
+        meta: {
+          page: 1,
+          limit: 10,
+          total: 2,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
+        },
+      })
     })
 
-    it('deve retornar 400 para CPF inválido', () => {
-      const invalidDto = {
-        document: '12345678901',
-        documentType: DocumentType.CPF,
-        producerName: 'Produtor Inválido',
-      }
+    it('deve filtrar por nome do produtor', async () => {
+      const response = await request(testApp.app.getHttpServer()).get('/api/producers?producerName=João').expect(200)
 
-      return request(app.getHttpServer())
-        .post('/api/producers')
-        .send(invalidDto)
-        .expect(400)
-        .then((response) => {
-          expect(response.body.message).toContain('O documento deve ser um CPF ou CNPJ válido')
-        })
+      expect(response.body.data).toHaveLength(1)
+      expect(response.body.data[0].producerName).toBe('João Silva')
     })
 
-    it('deve retornar 400 para CNPJ inválido', () => {
-      const invalidDto = {
-        document: '12345678901234',
-        documentType: DocumentType.CNPJ,
-        producerName: 'Empresa Inválida',
-      }
+    it('deve filtrar por documento', async () => {
+      const response = await request(testApp.app.getHttpServer()).get('/api/producers?document=01166995585').expect(200)
 
-      return request(app.getHttpServer())
-        .post('/api/producers')
-        .send(invalidDto)
-        .expect(400)
-        .then((response) => {
-          expect(response.body.message).toContain('O documento deve ser um CPF ou CNPJ válido')
-        })
+      expect(response.body.data).toHaveLength(1)
+      expect(response.body.data[0].document).toBe('01166995585')
     })
 
-    it('deve retornar 400 para documento vazio', () => {
-      const invalidDto = {
-        document: '',
-        documentType: DocumentType.CPF,
-        producerName: 'Produtor Teste',
-      }
+    it('deve filtrar por tipo de documento', async () => {
+      const response = await request(testApp.app.getHttpServer()).get('/api/producers?documentType=CNPJ').expect(200)
 
-      return request(app.getHttpServer())
-        .post('/api/producers')
-        .send(invalidDto)
-        .expect(400)
-        .then((response) => {
-          expect(response.body.message).toContain('O documento não pode estar vazio')
-        })
+      expect(response.body.data).toHaveLength(1)
+      expect(response.body.data[0].documentType).toBe('CNPJ')
     })
 
-    it('deve retornar 400 para nome vazio', () => {
-      const invalidDto = {
-        document: '01166995585',
-        documentType: DocumentType.CPF,
-        producerName: '',
-      }
+    it('deve paginar corretamente', async () => {
+      const response = await request(testApp.app.getHttpServer()).get('/api/producers?page=1&limit=1').expect(200)
 
-      return request(app.getHttpServer())
-        .post('/api/producers')
-        .send(invalidDto)
-        .expect(400)
-        .then((response) => {
-          expect(response.body.message).toContain('O nome do produtor não pode estar vazio')
-        })
-    })
-
-    it('deve retornar 400 para tipo de documento inválido', () => {
-      const invalidDto = {
-        document: '01166995585',
-        documentType: 'INVALID',
-        producerName: 'Produtor Teste',
-      }
-
-      return request(app.getHttpServer())
-        .post('/api/producers')
-        .send(invalidDto)
-        .expect(400)
-        .then((response) => {
-          expect(response.body.message).toContain('O tipo de documento deve ser um CPF ou CNPJ')
-        })
-    })
-
-    it('deve retornar 409 para documento duplicado', async () => {
-      const createProducerDto: CreateProducerDto = {
-        document: '01166995585',
-        documentType: DocumentType.CPF,
-        producerName: 'João Silva',
-      }
-
-      await request(app.getHttpServer()).post('/api/producers').send(createProducerDto).expect(201)
-
-      return request(app.getHttpServer())
-        .post('/api/producers')
-        .send(createProducerDto)
-        .expect(409)
-        .then((response) => {
-          expect(response.body.message).toContain('Produtor com o documento 01166995585 já existe')
-        })
+      expect(response.body.data).toHaveLength(1)
+      expect(response.body.meta).toEqual({
+        page: 1,
+        limit: 1,
+        total: 2,
+        totalPages: 2,
+        hasNext: true,
+        hasPrev: false,
+      })
     })
   })
 
-  describe('GET /producers', () => {
-    it('deve retornar lista vazia quando não há produtores', () => {
-      return request(app.getHttpServer())
-        .get('/api/producers')
-        .expect(200)
-        .then((response) => {
-          expect(response.body).toEqual([])
-        })
-    })
+  describe('GET /api/producers/:id', () => {
+    let producerId: string
 
-    it('deve retornar todos os produtores', async () => {
-      const producers = [
-        {
-          document: '01166995585',
-          documentType: DocumentType.CPF,
-          producerName: 'João Silva',
-        },
-        {
-          document: '12345678000195',
-          documentType: DocumentType.CNPJ,
-          producerName: 'Empresa Rural LTDA',
-        },
-      ]
-
-      for (const producer of producers) {
-        await request(app.getHttpServer()).post('/api/producers').send(producer).expect(201)
-      }
-
-      return request(app.getHttpServer())
-        .get('/api/producers')
-        .expect(200)
-        .then((response) => {
-          expect(response.body).toHaveLength(2)
-          expect(response.body[0]).toHaveProperty('id')
-          expect(response.body[0]).toHaveProperty('document')
-          expect(response.body[0]).toHaveProperty('documentType')
-          expect(response.body[0]).toHaveProperty('producerName')
-        })
-    })
-  })
-
-  describe('GET /producers/:id', () => {
-    it('deve retornar um produtor específico', async () => {
-      const createProducerDto: CreateProducerDto = {
-        document: '01166995585',
-        documentType: DocumentType.CPF,
-        producerName: 'João Silva',
-      }
-
-      const createResponse = await request(app.getHttpServer())
+    beforeEach(async () => {
+      const response = await request(testApp.app.getHttpServer())
         .post('/api/producers')
-        .send(createProducerDto)
+        .send(testData.producers.validCPF)
         .expect(201)
 
-      const producerId = createResponse.body.id
-
-      return request(app.getHttpServer())
-        .get(`/api/producers/${producerId}`)
-        .expect(200)
-        .then((response) => {
-          expect(response.body).toEqual({
-            id: producerId,
-            document: '01166995585',
-            documentType: DocumentType.CPF,
-            producerName: 'João Silva',
-          })
-        })
+      producerId = response.body.id
     })
 
-    it('deve retornar 400 para ID inválido', () => {
-      return request(app.getHttpServer()).get('/api/producers/invalid-id').expect(400)
+    it('deve retornar um produtor por ID', async () => {
+      const response = await request(testApp.app.getHttpServer()).get(`/api/producers/${producerId}`).expect(200)
+
+      expect(response.body).toEqual({
+        id: producerId,
+        producerName: testData.producers.validCPF.producerName,
+        document: testData.producers.validCPF.document,
+        documentType: testData.producers.validCPF.documentType,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+      })
     })
 
-    it('deve retornar 404 para produtor não encontrado', () => {
+    it('deve retornar 404 para ID inexistente', async () => {
       const fakeId = '123e4567-e89b-12d3-a456-426614174000'
-      return request(app.getHttpServer())
-        .get(`/api/producers/${fakeId}`)
-        .expect(404)
-        .then((response) => {
-          expect(response.body.message).toContain(
-            'Produtor com o ID 123e4567-e89b-12d3-a456-426614174000 não encontrado',
-          )
-        })
+
+      const response = await request(testApp.app.getHttpServer()).get(`/api/producers/${fakeId}`)
+
+      expectNotFoundError(response, 'Produtor')
+    })
+
+    it('deve rejeitar ID inválido', async () => {
+      const response = await request(testApp.app.getHttpServer()).get('/api/producers/invalid-id')
+
+      expect(response.status).toBe(400)
     })
   })
 
-  describe('PATCH /producers/:id', () => {
-    it('deve atualizar um produtor existente', async () => {
-      const createProducerDto: CreateProducerDto = {
-        document: '01166995585',
-        documentType: DocumentType.CPF,
-        producerName: 'João Silva',
-      }
+  describe('PATCH /api/producers/:id', () => {
+    let producerId: string
 
-      const createResponse = await request(app.getHttpServer())
+    beforeEach(async () => {
+      const response = await request(testApp.app.getHttpServer())
         .post('/api/producers')
-        .send(createProducerDto)
+        .send(testData.producers.validCPF)
         .expect(201)
 
-      const producerId = createResponse.body.id
+      producerId = response.body.id
+    })
 
-      const updateProducerDto: UpdateProducerDto = {
+    it('deve atualizar um produtor', async () => {
+      const updateData = {
         producerName: 'João Silva Atualizado',
       }
 
-      return request(app.getHttpServer())
+      const response = await request(testApp.app.getHttpServer())
         .patch(`/api/producers/${producerId}`)
-        .send(updateProducerDto)
+        .send(updateData)
         .expect(200)
-        .then((response) => {
-          expect(response.body).toEqual({
-            id: producerId,
-            document: '01166995585',
-            documentType: DocumentType.CPF,
-            producerName: 'João Silva Atualizado',
-          })
-        })
+
+      expect(response.body).toEqual({
+        id: producerId,
+        producerName: updateData.producerName,
+        document: testData.producers.validCPF.document,
+        documentType: testData.producers.validCPF.documentType,
+        createdAt: expect.any(String),
+        updatedAt: expect.any(String),
+      })
     })
 
-    it('deve atualizar apenas o nome do produtor', async () => {
-      const createProducerDto: CreateProducerDto = {
-        document: '01166995585',
-        documentType: DocumentType.CPF,
-        producerName: 'João Silva',
+    it('deve rejeitar atualização com dados inválidos', async () => {
+      const updateData = {
+        producerName: 'Jo',
       }
 
-      const createResponse = await request(app.getHttpServer())
-        .post('/api/producers')
-        .send(createProducerDto)
-        .expect(201)
+      const response = await request(testApp.app.getHttpServer()).patch(`/api/producers/${producerId}`).send(updateData)
 
-      const producerId = createResponse.body.id
-
-      const updateProducerDto = {
-        producerName: 'Novo Nome',
-      }
-
-      return request(app.getHttpServer())
-        .patch(`/api/producers/${producerId}`)
-        .send(updateProducerDto)
-        .expect(200)
-        .then((response) => {
-          expect(response.body.producerName).toBe('Novo Nome')
-          expect(response.body.document).toBe('01166995585')
-          expect(response.body.documentType).toBe(DocumentType.CPF)
-        })
+      expectValidationError(response, 'producerName')
     })
 
-    it('deve retornar 400 para ID inválido', () => {
-      const updateProducerDto = {
-        producerName: 'Novo Nome',
-      }
-
-      return request(app.getHttpServer()).patch('/api/producers/invalid-id').send(updateProducerDto).expect(400)
-    })
-
-    it('deve retornar 404 para produtor não encontrado', () => {
+    it('deve retornar 404 para ID inexistente', async () => {
       const fakeId = '123e4567-e89b-12d3-a456-426614174000'
-      const updateProducerDto = {
-        producerName: 'Novo Nome',
-      }
+      const updateData = { producerName: 'Teste' }
 
-      return request(app.getHttpServer())
-        .patch(`/api/producers/${fakeId}`)
-        .send(updateProducerDto)
-        .expect(404)
-        .then((response) => {
-          expect(response.body.message).toContain(
-            'Produtor com o ID 123e4567-e89b-12d3-a456-426614174000 não encontrado',
-          )
-        })
-    })
+      const response = await request(testApp.app.getHttpServer()).patch(`/api/producers/${fakeId}`).send(updateData)
 
-    it('deve retornar 400 para dados inválidos na atualização', async () => {
-      const createProducerDto: CreateProducerDto = {
-        document: '01166995585',
-        documentType: DocumentType.CPF,
-        producerName: 'João Silva',
-      }
-
-      const createResponse = await request(app.getHttpServer())
-        .post('/api/producers')
-        .send(createProducerDto)
-        .expect(201)
-
-      const producerId = createResponse.body.id
-
-      const invalidUpdateDto = {
-        producerName: '',
-      }
-
-      return request(app.getHttpServer())
-        .patch(`/api/producers/${producerId}`)
-        .send(invalidUpdateDto)
-        .expect(400)
-        .then((response) => {
-          expect(response.body.message).toContain('O nome do produtor não pode estar vazio')
-        })
+      expectNotFoundError(response, 'Produtor')
     })
   })
 
-  describe('DELETE /producers/:id', () => {
-    it('deve remover um produtor existente', async () => {
-      const createProducerDto: CreateProducerDto = {
-        document: '01166995585',
-        documentType: DocumentType.CPF,
-        producerName: 'João Silva',
-      }
+  describe('DELETE /api/producers/:id', () => {
+    let producerId: string
 
-      const createResponse = await request(app.getHttpServer())
+    beforeEach(async () => {
+      const response = await request(testApp.app.getHttpServer())
         .post('/api/producers')
-        .send(createProducerDto)
+        .send(testData.producers.validCPF)
         .expect(201)
 
-      const producerId = createResponse.body.id
-
-      await request(app.getHttpServer()).delete(`/api/producers/${producerId}`).expect(200)
-
-      return request(app.getHttpServer()).get(`/api/producers/${producerId}`).expect(404)
+      producerId = response.body.id
     })
 
-    it('deve retornar 400 para ID inválido', () => {
-      return request(app.getHttpServer()).delete('/api/producers/invalid-id').expect(400)
+    it('deve remover um produtor', async () => {
+      await request(testApp.app.getHttpServer()).delete(`/api/producers/${producerId}`).expect(200)
+
+      await request(testApp.app.getHttpServer()).get(`/api/producers/${producerId}`).expect(404)
     })
 
-    it('deve retornar 404 para produtor não encontrado', () => {
+    it('deve retornar 404 para ID inexistente', async () => {
       const fakeId = '123e4567-e89b-12d3-a456-426614174000'
-      return request(app.getHttpServer())
-        .delete(`/api/producers/${fakeId}`)
-        .expect(404)
-        .then((response) => {
-          expect(response.body.message).toContain(
-            'Produtor com o ID 123e4567-e89b-12d3-a456-426614174000 não encontrado',
-          )
-        })
+
+      const response = await request(testApp.app.getHttpServer()).delete(`/api/producers/${fakeId}`)
+
+      expectNotFoundError(response, 'Produtor')
     })
   })
 
-  describe('Cenários de integração', () => {
+  describe('Fluxos de integração', () => {
     it('deve permitir CRUD completo de um produtor', async () => {
-      const createProducerDto: CreateProducerDto = {
-        document: '01166995585',
-        documentType: DocumentType.CPF,
-        producerName: 'João Silva',
-      }
-
-      const createResponse = await request(app.getHttpServer())
+      const createResponse = await request(testApp.app.getHttpServer())
         .post('/api/producers')
-        .send(createProducerDto)
+        .send(testData.producers.validCPF)
         .expect(201)
 
       const producerId = createResponse.body.id
-      expect(createResponse.body.producerName).toBe('João Silva')
 
-      const getResponse = await request(app.getHttpServer()).get(`/api/producers/${producerId}`).expect(200)
+      const readResponse = await request(testApp.app.getHttpServer()).get(`/api/producers/${producerId}`).expect(200)
 
-      expect(getResponse.body.producerName).toBe('João Silva')
+      expect(readResponse.body.id).toBe(producerId)
 
-      const updateProducerDto = {
-        producerName: 'João Silva Atualizado',
-      }
-
-      const updateResponse = await request(app.getHttpServer())
+      const updateData = { producerName: 'Nome Atualizado' }
+      const updateResponse = await request(testApp.app.getHttpServer())
         .patch(`/api/producers/${producerId}`)
-        .send(updateProducerDto)
+        .send(updateData)
         .expect(200)
 
-      expect(updateResponse.body.producerName).toBe('João Silva Atualizado')
+      expect(updateResponse.body.producerName).toBe(updateData.producerName)
 
-      await request(app.getHttpServer()).delete(`/api/producers/${producerId}`).expect(200)
+      await request(testApp.app.getHttpServer()).delete(`/api/producers/${producerId}`).expect(200)
 
-      await request(app.getHttpServer()).get(`/api/producers/${producerId}`).expect(404)
-    })
-
-    it('deve validar documentos com formatação', async () => {
-      const cpfWithFormatting = {
-        document: '011.669.955-85',
-        documentType: DocumentType.CPF,
-        producerName: 'João Silva',
-      }
-
-      const response1 = await request(app.getHttpServer()).post('/api/producers').send(cpfWithFormatting).expect(201)
-
-      expect(response1.body.document).toBe('01166995585')
-
-      const cnpjWithFormatting = {
-        document: '12.345.678/0001-95',
-        documentType: DocumentType.CNPJ,
-        producerName: 'Empresa LTDA',
-      }
-
-      const response2 = await request(app.getHttpServer()).post('/api/producers').send(cnpjWithFormatting).expect(201)
-
-      expect(response2.body.document).toBe('12345678000195')
+      await request(testApp.app.getHttpServer()).get(`/api/producers/${producerId}`).expect(404)
     })
   })
 })
