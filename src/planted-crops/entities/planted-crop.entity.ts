@@ -5,21 +5,19 @@ export class PlantedCrop {
   @PrimaryGeneratedColumn('uuid')
   id: string
 
-  @Column('decimal', { precision: 10, scale: 2 })
-  plantedArea: number
+  @Column({ type: 'varchar' })
+  harvest: string
 
-  @Column({ type: 'int' })
-  harvestYear: number
+  @Column('simple-array')
+  cultures: string[]
+
+  @Column('simple-array')
+  plantedAreas: number[]
 
   @ManyToOne('Farm', 'plantedCrops', {
     onDelete: 'CASCADE',
   })
   farm: any
-
-  @ManyToOne('Culture', 'plantedCrops', {
-    onDelete: 'CASCADE',
-  })
-  culture: any
 
   @CreateDateColumn()
   createdAt: Date

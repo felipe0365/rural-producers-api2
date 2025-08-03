@@ -38,9 +38,12 @@ services:
         condition: service_healthy
     volumes:
       - ./src:/app/src
+      - ./package.json:/app/package.json
+      - ./package-lock.json:/app/package-lock.json
       - /app/node_modules
     networks:
       - rural-net
+    command: npm run start:dev
     healthcheck:
       test: ['CMD-SHELL', 'wget --no-verbose --tries=1 --spider http://localhost:3000/healthcheck || exit 1']
       interval: 30s

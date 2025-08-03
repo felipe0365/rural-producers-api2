@@ -1,5 +1,5 @@
 import React from 'react'
-import { Card } from 'antd'
+import { Card, Empty } from 'antd'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 
 interface ChartDataPoint {
@@ -10,19 +10,54 @@ interface ChartDataPoint {
 interface PieChartCardProps {
   title: string
   data: ChartDataPoint[]
+  emptyMessage?: string
 }
 
-const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D', '#FFC658', '#FF6B6B']
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D']
 
-const PieChartCard: React.FC<PieChartCardProps> = ({ title, data }) => {
-  const formatTooltip = (value: any, name: string) => {
-    const total = data.reduce((sum, item) => sum + item.value, 0)
-    const percentage = ((value / total) * 100).toFixed(1)
-    return [`${value} (${percentage}%)`, name]
+const PieChartCard: React.FC<PieChartCardProps> = ({ title, data, emptyMessage = 'Nenhum dado disponível' }) => {
+  if (!data || data.length === 0) {
+    return (
+      <Card title={title} className="chart-card">
+        <Empty description={emptyMessage} />
+      </Card>
+    )
+  }
+
+  // Verificar se todos os valores são 0
+  const allValuesZero = data.every((item) => item.value === 0)
+
+  if (allValuesZero) {
+    return (
+      <Card title={title} className="chart-card">
+        <div style={{ textAlign: 'center', padding: '20px' }}>
+          <div style={{ fontSize: '14px', color: '#666', marginBottom: '10px' }}>
+            Culturas disponíveis (sem área plantada):
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '8px' }}>
+            {data.map((item, index) => (
+              <div
+                key={index}
+                style={{
+                  backgroundColor: COLORS[index % COLORS.length],
+                  color: 'white',
+                  padding: '4px 12px',
+                  borderRadius: '12px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                }}
+              >
+                {item.name}
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
+    )
   }
 
   return (
-    <Card title={title} style={{ height: '100%' }}>
+    <Card title={title} className="chart-card">
       <ResponsiveContainer width="100%" height={300}>
         <PieChart>
           <Pie
@@ -39,7 +74,7 @@ const PieChartCard: React.FC<PieChartCardProps> = ({ title, data }) => {
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip formatter={formatTooltip} />
+          <Tooltip formatter={(value) => [value, 'Quantidade']} />
           <Legend />
         </PieChart>
       </ResponsiveContainer>

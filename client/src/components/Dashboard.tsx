@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
-import { Card, Row, Col, Statistic, Spin, Alert } from 'antd'
+import { Card, Row, Col, Statistic, Spin, Alert, Typography } from 'antd'
 import { HomeOutlined, EnvironmentOutlined, UserOutlined } from '@ant-design/icons'
 import { getDashboardData, type DashboardData } from '../services/api.services'
 import PieChartCard from './PieChartCard'
+
+const { Title } = Typography
 
 const Dashboard: React.FC = () => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
@@ -38,44 +40,33 @@ const Dashboard: React.FC = () => {
     return <Alert message="Erro" description={error || 'Não foi possível carregar os dados.'} type="error" showIcon />
   }
 
-  const landUseChartData = [
-    { name: 'Agricultável', value: dashboardData.byLandUse.arableArea },
-    { name: 'Vegetação', value: dashboardData.byLandUse.vegetationArea },
-  ]
-
   return (
     <div>
-      <h1 style={{ marginBottom: '24px' }}>Dashboard</h1>
+      <Title level={2}>Dashboard</Title>
 
       {/* Cards de Estatísticas */}
       <Row gutter={[16, 16]} style={{ marginBottom: '24px' }}>
         <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="Total de Fazendas"
-              value={dashboardData.totalFarms}
-              prefix={<HomeOutlined />}
-              valueStyle={{ color: '#1890ff' }}
-            />
+          <Card className="stat-card">
+            <Statistic title="Total de Fazendas" value={dashboardData.totalFarms} prefix={<HomeOutlined />} />
           </Card>
         </Col>
         <Col xs={24} sm={8}>
-          <Card>
+          <Card className="stat-card">
             <Statistic
               title="Área Total (ha)"
-              value={dashboardData.totalArea.toLocaleString('pt-BR')}
+              value={dashboardData.totalArea}
+              precision={2}
               prefix={<EnvironmentOutlined />}
-              valueStyle={{ color: '#52c41a' }}
             />
           </Card>
         </Col>
         <Col xs={24} sm={8}>
-          <Card>
+          <Card className="stat-card">
             <Statistic
               title="Total de Produtores"
-              value={dashboardData.totalFarms}
+              value={dashboardData.totalFarms > 0 ? Math.ceil(dashboardData.totalFarms / 2) : 0}
               prefix={<UserOutlined />}
-              valueStyle={{ color: '#722ed1' }}
             />
           </Card>
         </Col>
@@ -84,13 +75,28 @@ const Dashboard: React.FC = () => {
       {/* Gráficos */}
       <Row gutter={[16, 16]}>
         <Col xs={24} lg={8}>
-          <PieChartCard title="Fazendas por Estado" data={dashboardData.byState} />
+          <PieChartCard
+            title="Fazendas por Estado"
+            data={dashboardData.byState}
+            emptyMessage="Nenhuma fazenda cadastrada por estado"
+          />
         </Col>
         <Col xs={24} lg={8}>
-          <PieChartCard title="Culturas por Área Plantada" data={dashboardData.byCulture} />
+          <PieChartCard
+            title="Culturas por Área Plantada"
+            data={dashboardData.byCulture}
+            emptyMessage="Nenhuma cultura plantada cadastrada"
+          />
         </Col>
         <Col xs={24} lg={8}>
-          <PieChartCard title="Uso do Solo" data={landUseChartData} />
+          <PieChartCard
+            title="Uso do Solo"
+            data={[
+              { name: 'Área Agricultável', value: dashboardData.byLandUse.arableArea },
+              { name: 'Área de Vegetação', value: dashboardData.byLandUse.vegetationArea },
+            ]}
+            emptyMessage="Nenhuma área cadastrada"
+          />
         </Col>
       </Row>
     </div>

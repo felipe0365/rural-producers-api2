@@ -38,6 +38,9 @@ const farmSchema = z
       z.object({
         harvest: z.string().min(1, 'Safra é obrigatória'),
         cultures: z.array(z.string()).min(1, 'Selecione pelo menos uma cultura'),
+        plantedAreas: z
+          .array(z.number().min(0.01, 'Área plantada deve ser maior que 0'))
+          .min(1, 'Defina área para cada cultura'),
       }),
     ),
   })
@@ -87,7 +90,13 @@ const ProducerForm: React.FC = () => {
           totalArea: 0,
           arableArea: 0,
           vegetationArea: 0,
-          plantedCrops: [],
+          plantedCrops: [
+            {
+              harvest: '',
+              cultures: [],
+              plantedAreas: [],
+            },
+          ],
         },
       ],
     },
@@ -119,6 +128,7 @@ const ProducerForm: React.FC = () => {
           plantedCrops: farm.plantedCrops.map((crop) => ({
             harvest: crop.harvest,
             cultures: crop.cultures,
+            plantedAreas: crop.plantedAreas,
           })),
         })),
       })
@@ -160,7 +170,13 @@ const ProducerForm: React.FC = () => {
         totalArea: 0,
         arableArea: 0,
         vegetationArea: 0,
-        plantedCrops: [],
+        plantedCrops: [
+          {
+            harvest: '',
+            cultures: [],
+            plantedAreas: [],
+          },
+        ],
       },
     ])
   }
@@ -179,6 +195,7 @@ const ProducerForm: React.FC = () => {
     updatedFarms[farmIndex].plantedCrops.push({
       harvest: '',
       cultures: [],
+      plantedAreas: [],
     })
     setValue('farms', updatedFarms)
   }
@@ -411,6 +428,13 @@ const ProducerForm: React.FC = () => {
                                   mode="multiple"
                                   placeholder="Selecione as culturas"
                                   style={{ width: '100%' }}
+                                  onChange={(values) => {
+                                    field.onChange(values)
+                                    // Atualizar áreas plantadas quando culturas mudam
+                                    const currentAreas = farms[farmIndex].plantedCrops[cropIndex].plantedAreas || []
+                                    const newAreas = values.map((_, index) => currentAreas[index] || 0)
+                                    setValue(`farms.${farmIndex}.plantedCrops.${cropIndex}.plantedAreas`, newAreas)
+                                  }}
                                 >
                                   {commonCultures.map((culture) => (
                                     <Option key={culture} value={culture}>
@@ -432,6 +456,44 @@ const ProducerForm: React.FC = () => {
                           />
                         </Col>
                       </Row>
+
+                      {/* Áreas plantadas para cada cultura */}
+                      {farm.plantedCrops[cropIndex]?.cultures?.length > 0 && (
+                        <Row gutter={16} style={{ marginTop: '16px' }}>
+                          <Col span={24}>
+                            <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>Áreas Plantadas (ha):</div>
+                            <Row gutter={8}>
+                              {farm.plantedCrops[cropIndex].cultures.map((culture, cultureIndex) => (
+                                <Col span={8} key={cultureIndex}>
+                                  <Controller
+                                    name={`farms.${farmIndex}.plantedCrops.${cropIndex}.plantedAreas.${cultureIndex}`}
+                                    control={control}
+                                    render={({ field }) => (
+                                      <Form.Item
+                                        label={culture}
+                                        validateStatus={
+                                          errors.farms?.[farmIndex]?.plantedCrops?.[cropIndex]?.plantedAreas?.[
+                                            cultureIndex
+                                          ]
+                                            ? 'error'
+                                            : ''
+                                        }
+                                      >
+                                        <InputNumber
+                                          {...field}
+                                          min={0.01}
+                                          placeholder="Área (ha)"
+                                          style={{ width: '100%' }}
+                                        />
+                                      </Form.Item>
+                                    )}
+                                  />
+                                </Col>
+                              ))}
+                            </Row>
+                          </Col>
+                        </Row>
+                      )}
                     </Card>
                   ))}
                 </div>

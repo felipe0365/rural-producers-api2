@@ -1,5 +1,7 @@
-import { IsNotEmpty, IsNumber, IsString, IsUUID, Min, IsOptional } from 'class-validator'
+import { IsNotEmpty, IsNumber, IsString, IsUUID, Min, IsOptional, IsArray, ValidateNested } from 'class-validator'
 import { ApiProperty } from '@nestjs/swagger'
+import { Type } from 'class-transformer'
+import { CreatePlantedCropDto } from '../../planted-crops/dto/create-planted-crop.dto'
 
 export class CreateFarmDto {
   @ApiProperty({
@@ -67,4 +69,15 @@ export class CreateFarmDto {
   @IsOptional()
   @IsUUID()
   producerId?: string
+
+  @ApiProperty({
+    description: 'Lista de culturas plantadas na fazenda',
+    type: [CreatePlantedCropDto],
+    required: false,
+  })
+  @IsOptional()
+  @IsArray({ message: 'As culturas plantadas devem ser um array' })
+  @ValidateNested({ each: true })
+  @Type(() => CreatePlantedCropDto)
+  plantedCrops?: CreatePlantedCropDto[]
 }

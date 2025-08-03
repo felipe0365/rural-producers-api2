@@ -1,8 +1,9 @@
 import { Injectable, Logger } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Culture } from 'src/culture/entities/culture.entity'
-import { Farm } from 'src/farms/entities/farm.entity'
 import { Repository } from 'typeorm'
+import { Farm } from '../farms/entities/farm.entity'
+import { Culture } from '../culture/entities/culture.entity'
+import { PlantedCrop } from '../planted-crops/entities/planted-crop.entity'
 import { DashboardResponseDto } from './dto/dashboard-response.dto'
 
 @Injectable()
@@ -14,6 +15,8 @@ export class DashboardService {
     private farmRepository: Repository<Farm>,
     @InjectRepository(Culture)
     private cultureRepository: Repository<Culture>,
+    @InjectRepository(PlantedCrop)
+    private plantedCropRepository: Repository<PlantedCrop>,
   ) {}
 
   async getDashboardData(): Promise<DashboardResponseDto> {
@@ -80,18 +83,74 @@ export class DashboardService {
 
   private async getCultureByPlantedArea(): Promise<{ name: string; value: number }[]> {
     this.logger.debug('Buscando culturas por área plantada')
-    const result = await this.cultureRepository
-      .createQueryBuilder('culture')
-      .leftJoin('culture.plantedCrops', 'plantedCrop')
-      .select('culture.name', 'name')
-      .addSelect('SUM(plantedCrop.plantedArea)', 'value')
-      .groupBy('culture.name')
-      .having('COUNT(plantedCrop.id) > 0')
-      .getRawMany()
 
-    const cultureByArea = result.map((item) => ({ ...item, value: Number(item.value) }))
-    this.logger.debug(`Culturas por área plantada encontradas: ${cultureByArea.length} culturas`)
-    return cultureByArea
+    try {
+      // Primeiro verificar se há dados na tabela planted_crops
+      const plantedCropsCount = await this.plantedCropRepository.count()
+      this.logger.debug(`Total de plantios encontrados: ${plantedCropsCount}`)
+
+      if (plantedCropsCount === 0) {
+        this.logger.debug('Nenhum plantio encontrado, retornando culturas disponíveis')
+        // Se não há plantios, retornar as culturas disponíveis com área 0
+        const availableCultures = await this.cultureRepository
+          .createQueryBuilder('culture')
+          .select('culture.name', 'name')
+          .addSelect('0', 'value')
+          .getRawMany()
+
+        return availableCultures.map((culture) => ({
+          name: culture.name,
+          value: 0,
+        }))
+      }
+
+      // Buscar todos os plantios e processar manualmente
+      this.logger.debug('Buscando plantios com relações...')
+      const plantedCrops = await this.plantedCropRepository.find({
+        relations: ['farm'],
+      })
+      this.logger.debug(`Plantios carregados: ${plantedCrops.length}`)
+
+      // Criar um mapa para somar as áreas por cultura
+      const cultureAreaMap = new Map<string, number>()
+
+      for (const plantedCrop of plantedCrops) {
+        this.logger.debug(
+          `Processando plantio: ${plantedCrop.id}, culturas: ${plantedCrop.cultures.join(', ')}, áreas: ${plantedCrop.plantedAreas.join(', ')}`,
+        )
+
+        for (let i = 0; i < plantedCrop.cultures.length; i++) {
+          const culture = plantedCrop.cultures[i]
+          const area = plantedCrop.plantedAreas[i] || 0
+
+          const currentArea = cultureAreaMap.get(culture) || 0
+          cultureAreaMap.set(culture, currentArea + area)
+          this.logger.debug(`Cultura: ${culture}, Área: ${area}, Total acumulado: ${currentArea + area}`)
+        }
+      }
+
+      // Converter o mapa para array
+      const cultureByArea = Array.from(cultureAreaMap.entries()).map(([name, value]) => ({
+        name,
+        value: Number(value),
+      }))
+
+      this.logger.debug(`Culturas por área plantada encontradas: ${cultureByArea.length} culturas`)
+      return cultureByArea
+    } catch (error) {
+      this.logger.error(`Erro ao buscar culturas plantadas: ${error.message}`, error.stack)
+      // Se há erro, retornar as culturas disponíveis com área 0
+      const availableCultures = await this.cultureRepository
+        .createQueryBuilder('culture')
+        .select('culture.name', 'name')
+        .addSelect('0', 'value')
+        .getRawMany()
+
+      return availableCultures.map((culture) => ({
+        name: culture.name,
+        value: 0,
+      }))
+    }
   }
 
   private async getTotalLandUse(): Promise<{ arableArea: number; vegetationArea: number }> {

@@ -77,6 +77,7 @@ export interface PlantedCrop {
   id: string
   harvest: string
   cultures: string[]
+  plantedAreas: number[] // Array de áreas plantadas correspondente às culturas
   farmId: string
   createdAt: string
   updatedAt: string
@@ -85,6 +86,7 @@ export interface PlantedCrop {
 export interface CreatePlantedCropDto {
   harvest: string
   cultures: string[]
+  plantedAreas: number[] // Array de áreas plantadas correspondente às culturas
 }
 
 // Interfaces para Paginação e Filtros

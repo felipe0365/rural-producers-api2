@@ -26,43 +26,28 @@ export class PlantedCropsService {
   async create(createPlantedCropDto: CreatePlantedCropDto): Promise<PlantedCrop> {
     this.logger.log(`Iniciando processo de criação de plantio.`)
 
-    const { farmID, cultureID, plantedArea, harvestYear } = createPlantedCropDto
+    const { harvest, cultures, plantedAreas } = createPlantedCropDto
 
     try {
-      const farm = await this.farmRepository.findOne({ where: { id: farmID }, relations: ['plantedCrops'] })
-
-      if (!farm) {
-        this.logger.warn(`Fazenda com ID ${farmID} não encontrada para criar plantio.`)
-        throw new NotFoundException(`Fazenda com ID: ${farmID} não encontrada`)
+      // Validar se as arrays têm o mesmo tamanho
+      if (cultures.length !== plantedAreas.length) {
+        throw new BadRequestException('O número de culturas deve ser igual ao número de áreas plantadas')
       }
 
-      const culture = await this.cultureRepository.findOne({ where: { id: cultureID } })
-
-      if (!culture) {
-        this.logger.warn(`Cultura com ID ${cultureID} não encontrada para criar plantio.`)
-        throw new NotFoundException(`Cultura com ID: ${cultureID} não encontrada`)
-      }
-
-      const totalPlantedArea = farm.plantedCrops.reduce((sum, crop) => sum + Number(crop.plantedArea), 0)
-
-      if (totalPlantedArea + plantedArea > farm.totalArea) {
-        this.logger.warn(
-          `Área plantada (${plantedArea}ha) + área total existente (${totalPlantedArea}ha) excede área da fazenda (${farm.totalArea}ha).`,
-        )
-        throw new BadRequestException('Área total plantada excede a área total da fazenda')
+      // Validar se todas as áreas são positivas
+      if (plantedAreas.some((area) => area <= 0)) {
+        throw new BadRequestException('Todas as áreas plantadas devem ser maiores que zero')
       }
 
       const newPlantedCrop = this.plantedCropRepository.create({
-        ...createPlantedCropDto,
-        farm: farm,
-        culture: culture,
+        harvest,
+        cultures,
+        plantedAreas,
       })
 
       const savedPlantedCrop = await this.plantedCropRepository.save(newPlantedCrop)
 
-      this.logger.log(
-        `Plantio de ${culture.name} (${plantedArea}ha) criado com sucesso na fazenda ${farm.farmName} (ID: ${savedPlantedCrop.id}).`,
-      )
+      this.logger.log(`Plantio criado com sucesso (ID: ${savedPlantedCrop.id}). Culturas: ${cultures.join(', ')}`)
       return savedPlantedCrop
     } catch (error) {
       this.logger.error(`Falha ao criar plantio: ${error.message}`, error.stack)
@@ -82,7 +67,6 @@ export class PlantedCropsService {
     const queryBuilder = this.plantedCropRepository
       .createQueryBuilder('plantedCrop')
       .leftJoinAndSelect('plantedCrop.farm', 'farm')
-      .leftJoinAndSelect('plantedCrop.culture', 'culture')
 
     if (filterDto.farmId) {
       queryBuilder.andWhere('plantedCrop.farmId = :farmId', {
@@ -91,19 +75,22 @@ export class PlantedCropsService {
     }
 
     if (filterDto.cultureId) {
-      queryBuilder.andWhere('plantedCrop.cultureId = :cultureId', {
+      // Buscar por cultura específica no array de culturas
+      queryBuilder.andWhere('plantedCrop.cultures @> ARRAY[:cultureId]::varchar[]', {
         cultureId: filterDto.cultureId,
       })
     }
 
     if (filterDto.minArea) {
-      queryBuilder.andWhere('plantedCrop.plantedArea >= :minArea', {
+      // Buscar por área mínima no array de áreas plantadas
+      queryBuilder.andWhere('EXISTS (SELECT 1 FROM unnest(plantedCrop.plantedAreas) AS area WHERE area >= :minArea)', {
         minArea: filterDto.minArea,
       })
     }
 
     if (filterDto.maxArea) {
-      queryBuilder.andWhere('plantedCrop.plantedArea <= :maxArea', {
+      // Buscar por área máxima no array de áreas plantadas
+      queryBuilder.andWhere('EXISTS (SELECT 1 FROM unnest(plantedCrop.plantedAreas) AS area WHERE area <= :maxArea)', {
         maxArea: filterDto.maxArea,
       })
     }
@@ -122,53 +109,47 @@ export class PlantedCropsService {
   async findOne(id: string): Promise<PlantedCrop> {
     this.logger.log(`Buscando plantio com ID: ${id}`)
 
-    const plantedCrop = await this.plantedCropRepository.findOne({ where: { id }, relations: ['farm', 'culture'] })
+    const plantedCrop = await this.plantedCropRepository.findOne({
+      where: { id },
+      relations: ['farm'],
+    })
 
     if (!plantedCrop) {
-      this.logger.warn(`Plantio com o ID ${id} não encontrado.`)
-      throw new NotFoundException(`PlantedCrop com ID: ${id} não encontrada`)
+      this.logger.warn(`Plantio com ID ${id} não encontrado.`)
+      throw new NotFoundException(`Plantio com ID: ${id} não encontrado`)
     }
 
-    this.logger.log(`Plantio ${plantedCrop.culture.name} (ID: ${id}) encontrado com sucesso.`)
+    this.logger.log(`Plantio (ID: ${id}) encontrado com sucesso.`)
     return plantedCrop
   }
 
   async update(id: string, updatePlantedCropDto: UpdatePlantedCropDto): Promise<PlantedCrop> {
-    this.logger.log(`Atualizando plantio com ID: ${id}`)
+    this.logger.log(`Iniciando atualização do plantio com ID: ${id}`)
+
+    const plantedCrop = await this.findOne(id)
 
     try {
-      const plantedCrop = await this.plantedCropRepository.findOne({ where: { id }, relations: ['farm', 'culture'] })
+      const updatedPlantedCrop = this.plantedCropRepository.merge(plantedCrop, updatePlantedCropDto)
+      const savedPlantedCrop = await this.plantedCropRepository.save(updatedPlantedCrop)
 
-      if (!plantedCrop) {
-        this.logger.warn(`Plantio com o ID ${id} não encontrado para atualização.`)
-        throw new NotFoundException(`PlantedCrop com ID: ${id} não encontrada`)
-      }
-
-      const updatedPlantedCrop = await this.plantedCropRepository.save(updatePlantedCropDto)
-
-      this.logger.log(`Plantio ${plantedCrop.culture.name} (ID: ${id}) atualizado com sucesso.`)
-      return updatedPlantedCrop
+      this.logger.log(`Plantio (ID: ${id}) atualizado com sucesso.`)
+      return savedPlantedCrop
     } catch (error) {
-      this.logger.error(`Falha ao atualizar plantio ${id}: ${error.message}`, error.stack)
+      this.logger.error(`Falha ao atualizar plantio: ${error.message}`, error.stack)
       throw error
     }
   }
 
   async remove(id: string): Promise<void> {
-    this.logger.log(`Removendo plantio com ID: ${id}`)
+    this.logger.log(`Iniciando remoção do plantio com ID: ${id}`)
+
+    const plantedCrop = await this.findOne(id)
 
     try {
-      const plantedCrop = await this.plantedCropRepository.findOne({ where: { id }, relations: ['farm', 'culture'] })
-
-      if (!plantedCrop) {
-        this.logger.warn(`Plantio com o ID ${id} não encontrado para remoção.`)
-        throw new NotFoundException(`PlantedCrop com ID: ${id} não encontrada`)
-      }
-
       await this.plantedCropRepository.remove(plantedCrop)
-      this.logger.log(`Plantio ${plantedCrop.culture.name} (ID: ${id}) removido com sucesso.`)
+      this.logger.log(`Plantio (ID: ${id}) removido com sucesso.`)
     } catch (error) {
-      this.logger.error(`Falha ao remover plantio ${id}: ${error.message}`, error.stack)
+      this.logger.error(`Falha ao remover plantio: ${error.message}`, error.stack)
       throw error
     }
   }
