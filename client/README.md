@@ -8,7 +8,6 @@ A aplicação está disponível em:
 
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:3000
-- **PgAdmin**: http://localhost:5050
 
 ## 🛠️ Tecnologias Utilizadas
 

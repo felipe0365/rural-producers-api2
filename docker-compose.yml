@@ -65,26 +65,9 @@ services:
     networks:
       - rural-net
 
-  pgadmin:
-    image: dpage/pgadmin4
-    restart: always
-    container_name: rural-pgadmin
-    environment:
-      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
-      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
-    ports:
-      - '${PGADMIN_HOST_PORT}:${PGADMIN_CONTAINER_PORT}'
-    depends_on:
-      - db
-    networks:
-      - rural-net
-    volumes:
-      - pgadmin_data:/var/lib/pgadmin
-
 networks:
   rural-net:
     driver: bridge
 
 volumes:
   postgres_data:
-  pgadmin_data:
