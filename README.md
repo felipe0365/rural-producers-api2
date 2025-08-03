@@ -1,11 +1,14 @@
 <p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+  <img src="public/favicon.svg" width="120" alt="Rural Producers API Logo" />
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+<p align="center">
+  <strong>Sistema de Gestão de Produtores Rurais</strong>
+</p>
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
+<p align="center">
+  API REST para gerenciamento de produtores rurais, fazendas, culturas plantadas e dashboard de dados agrícolas.
+</p>
     <p align="center">
 <a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
 <a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
@@ -21,9 +24,24 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
+## Descrição
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+Sistema de Gestão de Produtores Rurais desenvolvido com [NestJS](https://github.com/nestjs/nest) framework TypeScript.
+
+### Funcionalidades
+
+- **Produtores Rurais**: Cadastro e gestão de produtores com validação de CPF/CNPJ
+- **Fazendas**: Controle de propriedades rurais com áreas cultiváveis e vegetação
+- **Culturas Plantadas**: Registro de plantios por safra e cultura
+- **Dashboard**: Visualização de dados e estatísticas agrícolas
+- **API REST**: Endpoints para integração com frontend e outros sistemas
+
+### Tecnologias
+
+- **Backend**: NestJS, TypeScript, TypeORM, PostgreSQL
+- **Frontend**: React, TypeScript, Vite
+- **Validação**: class-validator, custom validators
+- **Documentação**: Swagger/OpenAPI
 
 ## Project setup
 
