@@ -129,7 +129,8 @@ export class ProducersController {
     status: 404,
     description: 'Produtor não encontrado',
   })
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.producersService.remove(id)
+  async remove(@Param('id', ParseUUIDPipe) id: string) {
+    await this.producersService.remove(id)
+    return { message: 'Produtor removido com sucesso' }
   }
 }

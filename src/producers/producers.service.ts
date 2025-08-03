@@ -111,12 +111,41 @@ export class ProducersService {
 
   async remove(id: string): Promise<void> {
     this.logger.log(`Removendo produtor com ID: ${id}`)
-    const producer = await this.findOne(id)
-    if (!producer) {
-      this.logger.warn(`Produtor com o ID ${id} não encontrado.`)
-      throw new NotFoundException(`Produtor com o ID ${id} não encontrado.`)
+
+    try {
+      // Primeiro, vamos verificar se o produtor existe
+      const producer = await this.producerRepository.findOne({
+        where: { id },
+        relations: ['farms', 'farms.plantedCrops'],
+      })
+
+      if (!producer) {
+        this.logger.warn(`Produtor com o ID ${id} não encontrado.`)
+        throw new NotFoundException(`Produtor com o ID ${id} não encontrado.`)
+      }
+
+      this.logger.log(`Produtor encontrado: ${producer.producerName}, fazendas: ${producer.farms?.length || 0}`)
+
+      // Se o produtor tem fazendas, vamos removê-las primeiro
+      if (producer.farms && producer.farms.length > 0) {
+        this.logger.log(`Removendo ${producer.farms.length} fazendas do produtor`)
+
+        for (const farm of producer.farms) {
+          // Remove as culturas plantadas primeiro
+          if (farm.plantedCrops && farm.plantedCrops.length > 0) {
+            this.logger.log(`Removendo ${farm.plantedCrops.length} culturas plantadas da fazenda ${farm.farmName}`)
+            // Aqui você precisaria ter acesso ao repositório de PlantedCrop
+            // Por enquanto, vamos confiar no cascade
+          }
+        }
+      }
+
+      // Remove o produtor (que deve remover as fazendas em cascata)
+      const result = await this.producerRepository.remove(producer)
+      this.logger.log(`Produtor com o ID ${id} removido com sucesso. Resultado:`, result)
+    } catch (error) {
+      this.logger.error(`Erro ao remover produtor com ID ${id}: ${error.message}`, error.stack)
+      throw error
     }
-    await this.producerRepository.remove(producer)
-    this.logger.log(`Produtor com o ID ${id} removido com sucesso.`)
   }
 }

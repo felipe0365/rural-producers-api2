@@ -179,6 +179,7 @@ describe('ProducersService', () => {
       expect(result).toEqual(producer)
       expect(producerRepository.findOne).toHaveBeenCalledWith({
         where: { id: '57b79ca2-8d98-4b3f-90c2-131e39ff189f' },
+        relations: ['farms', 'farms.plantedCrops'],
       })
     })
 
@@ -228,14 +229,25 @@ describe('ProducersService', () => {
   describe('remove', () => {
     it('deve remover um produtor com sucesso', async () => {
       const id = '57b79ca2-8d98-4b3f-90c2-131e39ff189f'
-      const producer = { id, producerName: 'Produtor para Remover' } as Producer
+      const producer = {
+        id,
+        producerName: 'Produtor para Remover',
+        farms: [],
+        document: '12345678901',
+        documentType: DocumentType.CPF,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      } as Producer
 
       producerRepository.findOne!.mockResolvedValue(producer)
       producerRepository.remove!.mockResolvedValue(producer)
 
       await service.remove(id)
 
-      expect(producerRepository.findOne).toHaveBeenCalledWith({ where: { id } })
+      expect(producerRepository.findOne).toHaveBeenCalledWith({
+        where: { id },
+        relations: ['farms', 'farms.plantedCrops'],
+      })
       expect(producerRepository.remove).toHaveBeenCalledWith(producer)
     })
 
@@ -245,7 +257,19 @@ describe('ProducersService', () => {
       producerRepository.findOne!.mockResolvedValue(null)
 
       await expect(service.remove(id)).rejects.toThrow(new NotFoundException(`Produtor com o ID ${id} não encontrado.`))
-      expect(producerRepository.findOne).toHaveBeenCalledWith({ where: { id } })
+      expect(producerRepository.findOne).toHaveBeenCalledWith({
+        where: { id },
+        relations: ['farms', 'farms.plantedCrops'],
+      })
+    })
+
+    it('deve tratar erros durante a remoção', async () => {
+      const id = '57b79ca2-8d98-4b3f-90c2-131e39ff189f'
+      const error = new Error('Erro de banco de dados')
+
+      producerRepository.findOne!.mockRejectedValue(error)
+
+      await expect(service.remove(id)).rejects.toThrow(error)
     })
   })
 })

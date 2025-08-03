@@ -7,6 +7,15 @@ const apiClient = axios.create({
   },
 })
 
+// Interceptor para tratamento de erros
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.error('Erro na requisição:', error)
+    return Promise.reject(error)
+  },
+)
+
 interface ChartDataPoint {
   name: string
   value: number
@@ -145,7 +154,19 @@ export const updateProducer = async (id: string, data: UpdateProducerDto): Promi
 }
 
 export const deleteProducer = async (id: string): Promise<void> => {
-  await apiClient.delete(`/api/producers/${id}`)
+  try {
+    console.log('Fazendo requisição DELETE para:', `/api/producers/${id}`)
+    const response = await apiClient.delete(`/api/producers/${id}`)
+    console.log('Resposta da requisição DELETE:', response.status, response.statusText)
+  } catch (error: any) {
+    console.error('Erro na requisição DELETE:', error)
+    console.error('Detalhes do erro:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+    })
+    throw error
+  }
 }
 
 // Estados brasileiros para o select

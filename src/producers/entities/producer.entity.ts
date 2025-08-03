@@ -21,6 +21,7 @@ export class Producer {
 
   @OneToMany('Farm', 'producer', {
     cascade: true,
+    onDelete: 'CASCADE',
   })
   farms: any[]
 

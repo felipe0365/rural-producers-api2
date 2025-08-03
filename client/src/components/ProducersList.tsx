@@ -45,12 +45,21 @@ const ProducersList: React.FC = () => {
 
   const handleDelete = async (id: string) => {
     try {
+      console.log('Tentando excluir produtor com ID:', id)
       await deleteProducer(id)
+      console.log('Produtor excluído com sucesso')
       message.success('Produtor excluído com sucesso')
       fetchProducers()
-    } catch (error) {
-      message.error('Erro ao excluir produtor')
-      console.error(error)
+    } catch (error: any) {
+      console.error('Erro ao excluir produtor:', error)
+      console.error('Detalhes do erro:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message,
+      })
+      const errorMessage = error.response?.data?.message || error.message || 'Erro ao excluir produtor'
+      message.error(errorMessage)
     }
   }
 

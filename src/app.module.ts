@@ -41,6 +41,9 @@ import { DashboardModule } from './dashboard/dashboard.module'
           database: configService.get<string>('DB_DATABASE'),
           autoLoadEntities: true,
           synchronize: true,
+          logging: ['error', 'warn', 'query'],
+          dropSchema: false,
+          migrationsRun: false,
         }
       },
     }),

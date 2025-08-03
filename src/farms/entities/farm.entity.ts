@@ -32,7 +32,9 @@ export class Farm {
   @Column({ type: 'decimal', precision: 10, scale: 2 })
   vegetationArea: number
 
-  @ManyToOne('Producer', 'farms')
+  @ManyToOne('Producer', 'farms', {
+    onDelete: 'CASCADE',
+  })
   producer: any
 
   @OneToMany(() => PlantedCrop, (plantedCrop) => plantedCrop.farm, {
