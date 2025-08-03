@@ -59,7 +59,6 @@ Sistema completo para gestão de produtores rurais desenvolvido com NestJS e Rea
 
 - Docker & Docker Compose
 - Nginx (Proxy reverso)
-- PgAdmin (Gestão do banco)
 
 ## 🚀 Setup Local
 
@@ -107,7 +106,6 @@ docker-compose logs -f backend
 - **Frontend**: http://localhost:5173
 - **Backend API**: http://localhost:3000
 - **Swagger Docs**: http://localhost:3000/api
-- **PgAdmin**: http://localhost:5050
 
 ## 🧪 Testes
 
