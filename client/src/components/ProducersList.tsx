@@ -71,7 +71,9 @@ const ProducersList: React.FC = () => {
       render: (document: string, record: Producer) => (
         <div>
           <div>{document}</div>
-          <Tag color={record.documentType === 'CPF' ? 'blue' : 'green'}>{record.documentType}</Tag>
+          <Tag color={record.documentType === 'CPF' ? 'blue' : 'green'} className="document-tag">
+            {record.documentType}
+          </Tag>
         </div>
       ),
     },

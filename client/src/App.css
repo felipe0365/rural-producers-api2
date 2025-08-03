@@ -330,3 +330,86 @@ body {
     display: block;
   }
 }
+
+/* Override Ant Design button colors for agricultural theme */
+.ant-btn-primary {
+  background-color: #4caf50 !important;
+  border-color: #4caf50 !important;
+}
+
+.ant-btn-primary:hover {
+  background-color: #66bb6a !important;
+  border-color: #66bb6a !important;
+}
+
+.ant-btn-primary:active {
+  background-color: #2e7d32 !important;
+  border-color: #2e7d32 !important;
+}
+
+.ant-btn-primary:focus {
+  background-color: #4caf50 !important;
+  border-color: #4caf50 !important;
+  box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2) !important;
+}
+
+.ant-btn-dashed {
+  border-color: #4caf50 !important;
+  color: #4caf50 !important;
+}
+
+.ant-btn-dashed:hover {
+  border-color: #66bb6a !important;
+  color: #66bb6a !important;
+}
+
+.ant-btn-text {
+  color: #4caf50 !important;
+}
+
+.ant-btn-text:hover {
+  color: #66bb6a !important;
+  background-color: rgba(76, 175, 80, 0.1) !important;
+}
+
+.ant-btn-danger {
+  background-color: #f44336 !important;
+  border-color: #f44336 !important;
+}
+
+.ant-btn-danger:hover {
+  background-color: #d32f2f !important;
+  border-color: #d32f2f !important;
+}
+
+/* Search input styling */
+.ant-input-search .ant-input-search-button {
+  background-color: #4caf50 !important;
+  border-color: #4caf50 !important;
+}
+
+.ant-input-search .ant-input-search-button:hover {
+  background-color: #66bb6a !important;
+  border-color: #66bb6a !important;
+}
+
+/* Tag styling */
+.ant-tag {
+  border-color: #4caf50 !important;
+}
+
+.ant-tag-green {
+  background-color: #e8f5e8 !important;
+  color: #2e7d32 !important;
+  border-color: #4caf50 !important;
+}
+
+.document-tag {
+  font-weight: 500;
+}
+
+.ant-tag-blue {
+  background-color: #e3f2fd !important;
+  color: #1976d2 !important;
+  border-color: #2196f3 !important;
+}

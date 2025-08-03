@@ -9,8 +9,19 @@ import ProducerDetails from './components/ProducerDetails'
 import './App.css'
 
 function App() {
+  const theme = {
+    token: {
+      colorPrimary: '#4caf50',
+      colorSuccess: '#66bb6a',
+      colorWarning: '#ff9800',
+      colorError: '#f44336',
+      colorInfo: '#8bc34a',
+      borderRadius: 6,
+    },
+  }
+
   return (
-    <ConfigProvider locale={ptBR}>
+    <ConfigProvider locale={ptBR} theme={theme}>
       <Router>
         <Layout>
           <Routes>
