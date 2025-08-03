@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
@@ -21,6 +21,14 @@ const LoginPage: React.FC = () => {
   } | null>(null)
   const { login, register } = useAuth()
   const navigate = useNavigate()
+
+  // Adicionar classe ao body para sobrescrever CSS global
+  useEffect(() => {
+    document.body.classList.add('login-page')
+    return () => {
+      document.body.classList.remove('login-page')
+    }
+  }, [])
 
   const [formData, setFormData] = useState({
     name: '',
