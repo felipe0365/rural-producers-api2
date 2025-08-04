@@ -289,8 +289,8 @@ Este projeto está licenciado sob a **MIT License** - veja o arquivo [LICENSE](L
 
 **Desenvolvido por Felipe Moreira**
 
-[![GitHub stars](https://img.shields.io/github/stars/seu-usuario/rural-producers-api?style=social)](https://github.com/seu-usuario/rural-producers-api/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/seu-usuario/rural-producers-api?style=social)](https://github.com/seu-usuario/rural-producers-api/network)
-[![GitHub issues](https://img.shields.io/github/issues/seu-usuario/rural-producers-api)](https://github.com/seu-usuario/rural-producers-api/issues)
+[![GitHub stars](https://img.shields.io/github/stars/felipe0365/rural-producers-api?style=social)](https://github.com/felipe0365/rural-producers-api/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/felipe0365/rural-producers-api?style=social)](https://github.com/felipe0365/rural-producers-api/network)
+[![GitHub issues](https://img.shields.io/github/issues/felipe0365/rural-producers-api)](https://github.com/felipe0365/rural-producers-api/issues)
 
 </div>
