@@ -100,7 +100,6 @@
 ```bash
 # Clone o repositório
 git clone https://github.com/felipe0365/rural-producers-api2.git
-cd rural-producers-api
 
 # Configure as variáveis de ambiente
 cp .env.example .env
