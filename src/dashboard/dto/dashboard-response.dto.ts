@@ -7,6 +7,12 @@ interface ChartDataPoint {
 
 export class DashboardResponseDto {
   @ApiProperty({
+    description: 'Total de produtores cadastrados',
+    example: 75,
+  })
+  totalProducers: number
+
+  @ApiProperty({
     description: 'Total de fazendas cadastradas',
     example: 150,
   })

@@ -36,6 +36,7 @@ interface ChartDataPoint {
 }
 
 export interface DashboardData {
+  totalProducers: number
   totalFarms: number
   totalArea: number
   byState: ChartDataPoint[]

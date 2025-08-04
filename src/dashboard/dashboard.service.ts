@@ -4,6 +4,7 @@ import { Repository } from 'typeorm'
 import { Farm } from '../farms/entities/farm.entity'
 import { Culture } from '../culture/entities/culture.entity'
 import { PlantedCrop } from '../planted-crops/entities/planted-crop.entity'
+import { Producer } from '../producers/entities/producer.entity'
 import { DashboardResponseDto } from './dto/dashboard-response.dto'
 
 @Injectable()
@@ -17,13 +18,16 @@ export class DashboardService {
     private cultureRepository: Repository<Culture>,
     @InjectRepository(PlantedCrop)
     private plantedCropRepository: Repository<PlantedCrop>,
+    @InjectRepository(Producer)
+    private producerRepository: Repository<Producer>,
   ) {}
 
   async getDashboardData(): Promise<DashboardResponseDto> {
     this.logger.log('Iniciando busca de dados do dashboard')
 
     try {
-      const [totalFarms, totalArea, byState, byCulture, byLandUse] = await Promise.all([
+      const [totalProducers, totalFarms, totalArea, byState, byCulture, byLandUse] = await Promise.all([
+        this.getTotalProducers(),
         this.getTotalFarms(),
         this.getTotalArea(),
         this.getFarmsByState(),
@@ -32,6 +36,7 @@ export class DashboardService {
       ])
 
       const dashboardData = {
+        totalProducers,
         totalFarms,
         totalArea,
         byState,
@@ -47,6 +52,13 @@ export class DashboardService {
       this.logger.error(`Falha ao gerar dados do dashboard: ${error.message}`, error.stack)
       throw error
     }
+  }
+
+  private async getTotalProducers(): Promise<number> {
+    this.logger.debug('Buscando total de produtores')
+    const count = await this.producerRepository.count()
+    this.logger.debug(`Total de produtores encontrados: ${count}`)
+    return count
   }
 
   private async getTotalFarms(): Promise<number> {
@@ -85,13 +97,11 @@ export class DashboardService {
     this.logger.debug('Buscando culturas por área plantada')
 
     try {
-      // Primeiro verificar se há dados na tabela planted_crops
       const plantedCropsCount = await this.plantedCropRepository.count()
       this.logger.debug(`Total de plantios encontrados: ${plantedCropsCount}`)
 
       if (plantedCropsCount === 0) {
         this.logger.debug('Nenhum plantio encontrado, retornando culturas disponíveis')
-        // Se não há plantios, retornar as culturas disponíveis com área 0
         const availableCultures = await this.cultureRepository
           .createQueryBuilder('culture')
           .select('culture.name', 'name')
@@ -104,14 +114,12 @@ export class DashboardService {
         }))
       }
 
-      // Buscar todos os plantios e processar manualmente
       this.logger.debug('Buscando plantios com relações...')
       const plantedCrops = await this.plantedCropRepository.find({
         relations: ['farm'],
       })
       this.logger.debug(`Plantios carregados: ${plantedCrops.length}`)
 
-      // Criar um mapa para somar as áreas por cultura
       const cultureAreaMap = new Map<string, number>()
 
       for (const plantedCrop of plantedCrops) {
@@ -129,7 +137,6 @@ export class DashboardService {
         }
       }
 
-      // Converter o mapa para array
       const cultureByArea = Array.from(cultureAreaMap.entries()).map(([name, value]) => ({
         name,
         value: Number(value),
@@ -139,7 +146,6 @@ export class DashboardService {
       return cultureByArea
     } catch (error) {
       this.logger.error(`Erro ao buscar culturas plantadas: ${error.message}`, error.stack)
-      // Se há erro, retornar as culturas disponíveis com área 0
       const availableCultures = await this.cultureRepository
         .createQueryBuilder('culture')
         .select('culture.name', 'name')

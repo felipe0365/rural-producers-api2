@@ -71,7 +71,7 @@ const Dashboard: React.FC = () => {
           <Card className="stat-card" style={{ borderLeft: '4px solid #66bb6a' }}>
             <Statistic
               title="👨‍🌾 Total de Produtores"
-              value={dashboardData.totalFarms > 0 ? Math.ceil(dashboardData.totalFarms / 2) : 0}
+              value={dashboardData.totalProducers}
               prefix={<UserOutlined style={{ color: '#66bb6a' }} />}
             />
           </Card>
