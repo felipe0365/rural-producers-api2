@@ -281,7 +281,7 @@ Este projeto está licenciado sob a **MIT License** - veja o arquivo [LICENSE](L
 ## 📞 Suporte
 
 - **Email**: felipe0365@gmail.com
-- **Documentação**: [Wiki do Projeto](https://github.com/seu-usuario/rural-producers-api/wiki)
+- **Documentação**: [Wiki do Projeto](https://github.com/felipe0365/rural-producers-api/wiki)
 
 ---
 
