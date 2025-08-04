@@ -228,18 +228,6 @@ test/
 └── 🧪 culture.e2e-spec.ts   # Testes de culturas
 ```
 
-### Padrões de Commit
-
-Seguimos o [Conventional Commits](https://www.conventionalcommits.org/):
-
-- `feat:` - Nova funcionalidade
-- `fix:` - Correção de bug
-- `docs:` - Documentação
-- `style:` - Formatação
-- `refactor:` - Refatoração
-- `test:` - Testes
-- `chore:` - Manutenção
-
 ## 📄 Licença
 
 Este projeto está licenciado sob a **MIT License** - veja o arquivo [LICENSE](LICENSE) para detalhes.
