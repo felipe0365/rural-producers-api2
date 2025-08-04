@@ -117,32 +117,6 @@ docker-compose up --build
 
 ## 🔧 Desenvolvimento
 
-### Scripts Disponíveis
-
-#### Backend
-
-```bash
-npm run start:dev          # Desenvolvimento com hot reload
-npm run start:debug        # Desenvolvimento com debug
-npm run build              # Build para produção
-npm run start:prod         # Executar produção
-npm run test               # Executar testes unitários
-npm run test:e2e           # Executar testes end-to-end
-npm run test:cov           # Cobertura de testes
-npm run lint               # Linting
-npm run format             # Formatação de código
-```
-
-#### Frontend
-
-```bash
-cd client
-npm run dev                # Desenvolvimento
-npm run build              # Build para produção
-npm run preview            # Preview da build
-npm run lint               # Linting
-```
-
 ### Estrutura do Projeto
 
 ```
