@@ -3,11 +3,13 @@ import { DashboardService } from './dashboard.service'
 import { Repository } from 'typeorm'
 import { Farm } from '../farms/entities/farm.entity'
 import { Culture } from '../culture/entities/culture.entity'
+import { Producer } from '../producers/entities/producer.entity'
+import { PlantedCrop } from '../planted-crops/entities/planted-crop.entity'
 import { getRepositoryToken } from '@nestjs/typeorm'
 import { DashboardResponseDto } from './dto/dashboard-response.dto'
 
 type MockRepository<T extends Record<string, any>> = Partial<Record<keyof Repository<T>, jest.Mock>>
-const createMockRepository = (): MockRepository<Farm | Culture> => ({
+const createMockRepository = (): MockRepository<Farm | Culture | Producer | PlantedCrop> => ({
   count: jest.fn(),
   createQueryBuilder: jest.fn(() => ({
     select: jest.fn().mockReturnThis(),
@@ -24,6 +26,8 @@ describe('DashboardService', () => {
   let service: DashboardService
   let farmRepository: MockRepository<Farm>
   let cultureRepository: MockRepository<Culture>
+  let producerRepository: MockRepository<Producer>
+  let plantedCropRepository: MockRepository<PlantedCrop>
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -37,12 +41,22 @@ describe('DashboardService', () => {
           provide: getRepositoryToken(Culture),
           useValue: createMockRepository(),
         },
+        {
+          provide: getRepositoryToken(Producer),
+          useValue: createMockRepository(),
+        },
+        {
+          provide: getRepositoryToken(PlantedCrop),
+          useValue: createMockRepository(),
+        },
       ],
     }).compile()
 
     service = module.get<DashboardService>(DashboardService)
     farmRepository = module.get<MockRepository<Farm>>(getRepositoryToken(Farm))
     cultureRepository = module.get<MockRepository<Culture>>(getRepositoryToken(Culture))
+    producerRepository = module.get<MockRepository<Producer>>(getRepositoryToken(Producer))
+    plantedCropRepository = module.get<MockRepository<PlantedCrop>>(getRepositoryToken(PlantedCrop))
   })
 
   it('should be defined', () => {
@@ -52,26 +66,24 @@ describe('DashboardService', () => {
   describe('getDashboardData', () => {
     it('deve retornar dados do dashboard com sucesso', async () => {
       const mockDashboardData: DashboardResponseDto = {
-        totalFarms: 10,
-        totalArea: 1000,
-        byState: [
-          { name: 'SP', value: 5 },
-          { name: 'MG', value: 3 },
-          { name: 'RJ', value: 2 },
-        ],
+        totalProducers: 0,
+        totalFarms: 0,
+        totalArea: 0,
+        byState: [],
         byCulture: [
-          { name: 'Soja', value: 500 },
-          { name: 'Milho', value: 300 },
-          { name: 'Café', value: 200 },
+          { name: 'Soja', value: 0 },
+          { name: 'Milho', value: 0 },
+          { name: 'Café', value: 0 },
         ],
         byLandUse: {
-          arableArea: 800,
-          vegetationArea: 200,
+          arableArea: 0,
+          vegetationArea: 0,
         },
       }
 
-      // Mock dos métodos privados através dos repositórios
+      producerRepository.count!.mockResolvedValue(mockDashboardData.totalProducers)
       farmRepository.count!.mockResolvedValue(mockDashboardData.totalFarms)
+      plantedCropRepository.count!.mockResolvedValue(0) // Nenhum plantio para simplicidade
 
       const mockQueryBuilder = {
         select: jest.fn().mockReturnThis(),
@@ -86,16 +98,16 @@ describe('DashboardService', () => {
       farmRepository.createQueryBuilder!.mockReturnValue(mockQueryBuilder)
       cultureRepository.createQueryBuilder!.mockReturnValue(mockQueryBuilder)
 
-      // Mock para getTotalArea
       mockQueryBuilder.getRawOne!.mockResolvedValueOnce({ totalAreaSum: mockDashboardData.totalArea })
 
-      // Mock para getFarmsByState
       mockQueryBuilder.getRawMany!.mockResolvedValueOnce(mockDashboardData.byState)
 
-      // Mock para getCultureByPlantedArea
-      mockQueryBuilder.getRawMany!.mockResolvedValueOnce(mockDashboardData.byCulture)
+      mockQueryBuilder.getRawMany!.mockResolvedValueOnce([
+        { name: 'Soja', value: 0 },
+        { name: 'Milho', value: 0 },
+        { name: 'Café', value: 0 },
+      ])
 
-      // Mock para getTotalLandUse
       mockQueryBuilder.getRawOne!.mockResolvedValueOnce({
         totalArable: mockDashboardData.byLandUse.arableArea,
         totalVegetation: mockDashboardData.byLandUse.vegetationArea,
