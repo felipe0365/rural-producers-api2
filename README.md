@@ -110,12 +110,6 @@ cp .env.example .env
 docker-compose up --build
 ```
 
-Acesse:
-
-- **Frontend**: http://localhost:3001
-- **Backend API**: http://localhost:3000
-- **Documentação**: http://localhost:3000/api/docs
-
 ### Serviços Disponíveis
 
 - **Frontend**: http://localhost:3001

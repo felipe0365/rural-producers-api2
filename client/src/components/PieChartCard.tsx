@@ -24,7 +24,6 @@ const PieChartCard: React.FC<PieChartCardProps> = ({ title, data, emptyMessage =
     )
   }
 
-  // Verificar se todos os valores são 0
   const allValuesZero = data.every((item) => item.value === 0)
 
   if (allValuesZero) {
