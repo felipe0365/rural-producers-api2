@@ -121,6 +121,14 @@ docker-compose up --build
 
 ```
 rural-producers-api/
+├── 📁 client/                # Frontend - React
+│   ├── 📁 src/
+│   │   ├── 🧩 components/   # Componentes React
+│   │   ├── 🔄 contexts/     # Contextos (Auth)
+│   │   ├── 🌐 services/     # Serviços de API
+│   │   └── 📱 pages/        # Páginas da aplicação
+│   └── 📁 public/           # Arquivos estáticos
+│
 ├── 📁 src/                    # Backend - NestJS
 │   ├── 🔐 auth/              # Sistema de autenticação
 │   ├── 👥 producers/         # Módulo de produtores
@@ -129,13 +137,7 @@ rural-producers-api/
 │   ├── 📊 planted-crops/    # Módulo de safras
 │   ├── 📈 dashboard/        # Módulo do dashboard
 │   └── 🔧 common/           # Utilitários compartilhados
-├── 📁 client/                # Frontend - React
-│   ├── 📁 src/
-│   │   ├── 🧩 components/   # Componentes React
-│   │   ├── 🔄 contexts/     # Contextos (Auth)
-│   │   ├── 🌐 services/     # Serviços de API
-│   │   └── 📱 pages/        # Páginas da aplicação
-│   └── 📁 public/           # Arquivos estáticos
+│
 ├── 📁 test/                  # Testes automatizados
 ├── 🐳 docker-compose.yml     # Configuração Docker
 └── 📄 README.md             # Documentação
