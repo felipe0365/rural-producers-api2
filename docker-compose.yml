@@ -64,6 +64,12 @@ services:
       - backend
     networks:
       - rural-net
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+        reservations:
+          memory: 2G
 
 networks:
   rural-net:

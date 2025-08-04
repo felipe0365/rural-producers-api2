@@ -6,6 +6,10 @@ WORKDIR /app
 # Definir argumento para a URL da API
 ARG REACT_APP_API_URL=http://localhost:3000
 
+# Configurar variáveis de ambiente para aumentar a memória do Node.js
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+ENV REACT_APP_API_URL=$REACT_APP_API_URL
+
 # Copiar arquivos de dependências
 COPY package*.json ./
 
@@ -15,10 +19,7 @@ RUN npm ci
 # Copiar código fonte
 COPY . .
 
-# Definir variável de ambiente para o build
-ENV REACT_APP_API_URL=$REACT_APP_API_URL
-
-# Construir a aplicação
+# Construir a aplicação com configurações de memória otimizadas
 RUN npm run build
 
 # Estágio de produção
