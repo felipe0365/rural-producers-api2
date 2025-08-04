@@ -99,7 +99,7 @@
 
 ```bash
 # Clone o repositório
-git clone https://github.com/seu-usuario/rural-producers-api.git
+git clone https://github.com/felipe0365/rural-producers-api2.git
 cd rural-producers-api
 
 # Configure as variáveis de ambiente
@@ -120,7 +120,6 @@ Acesse:
 
 - **Frontend**: http://localhost:3001
 - **Backend API**: http://localhost:3000
-- **PostgreSQL**: localhost:5432
 - **Documentação Swagger**: http://localhost:3000/api/docs
 
 ## 🔧 Desenvolvimento
@@ -281,16 +280,11 @@ Este projeto está licenciado sob a **MIT License** - veja o arquivo [LICENSE](L
 ## 📞 Suporte
 
 - **Email**: felipe0365@gmail.com
-- **Documentação**: [Wiki do Projeto](https://github.com/felipe0365/rural-producers-api/wiki)
 
 ---
 
 <div align="center">
 
 **Desenvolvido por Felipe Moreira**
-
-[![GitHub stars](https://img.shields.io/github/stars/felipe0365/rural-producers-api?style=social)](https://github.com/felipe0365/rural-producers-api/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/felipe0365/rural-producers-api?style=social)](https://github.com/felipe0365/rural-producers-api/network)
-[![GitHub issues](https://img.shields.io/github/issues/felipe0365/rural-producers-api)](https://github.com/felipe0365/rural-producers-api/issues)
 
 </div>
