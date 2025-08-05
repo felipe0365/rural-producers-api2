@@ -29,12 +29,10 @@ export class PlantedCropsService {
     const { harvest, cultures, plantedAreas } = createPlantedCropDto
 
     try {
-      // Validar se as arrays têm o mesmo tamanho
       if (cultures.length !== plantedAreas.length) {
         throw new BadRequestException('O número de culturas deve ser igual ao número de áreas plantadas')
       }
 
-      // Validar se todas as áreas são positivas
       if (plantedAreas.some((area) => area <= 0)) {
         throw new BadRequestException('Todas as áreas plantadas devem ser maiores que zero')
       }
@@ -75,21 +73,18 @@ export class PlantedCropsService {
     }
 
     if (filterDto.cultureId) {
-      // Buscar por cultura específica no array de culturas
       queryBuilder.andWhere('plantedCrop.cultures @> ARRAY[:cultureId]::varchar[]', {
         cultureId: filterDto.cultureId,
       })
     }
 
     if (filterDto.minArea) {
-      // Buscar por área mínima no array de áreas plantadas
       queryBuilder.andWhere('EXISTS (SELECT 1 FROM unnest(plantedCrop.plantedAreas) AS area WHERE area >= :minArea)', {
         minArea: filterDto.minArea,
       })
     }
 
     if (filterDto.maxArea) {
-      // Buscar por área máxima no array de áreas plantadas
       queryBuilder.andWhere('EXISTS (SELECT 1 FROM unnest(plantedCrop.plantedAreas) AS area WHERE area <= :maxArea)', {
         maxArea: filterDto.maxArea,
       })

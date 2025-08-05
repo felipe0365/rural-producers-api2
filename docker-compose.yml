@@ -60,7 +60,7 @@ services:
             context: ./rural-producers-frontend
             dockerfile: Dockerfile.frontend
             args:
-                REACT_APP_API_URL: http://backend:${PORT}
+                VITE_API_URL: http://backend:${PORT}
         container_name: rural-frontend
         ports:
             - "${FRONTEND_PORT}:80"

@@ -113,7 +113,6 @@ export class ProducersService {
     this.logger.log(`Removendo produtor com ID: ${id}`)
 
     try {
-      // Primeiro, vamos verificar se o produtor existe
       const producer = await this.producerRepository.findOne({
         where: { id },
         relations: ['farms', 'farms.plantedCrops'],
@@ -126,21 +125,16 @@ export class ProducersService {
 
       this.logger.log(`Produtor encontrado: ${producer.producerName}, fazendas: ${producer.farms?.length || 0}`)
 
-      // Se o produtor tem fazendas, vamos removê-las primeiro
       if (producer.farms && producer.farms.length > 0) {
         this.logger.log(`Removendo ${producer.farms.length} fazendas do produtor`)
 
         for (const farm of producer.farms) {
-          // Remove as culturas plantadas primeiro
           if (farm.plantedCrops && farm.plantedCrops.length > 0) {
             this.logger.log(`Removendo ${farm.plantedCrops.length} culturas plantadas da fazenda ${farm.farmName}`)
-            // Aqui você precisaria ter acesso ao repositório de PlantedCrop
-            // Por enquanto, vamos confiar no cascade
           }
         }
       }
 
-      // Remove o produtor (que deve remover as fazendas em cascata)
       const result = await this.producerRepository.remove(producer)
       this.logger.log(`Produtor com o ID ${id} removido com sucesso. Resultado:`, result)
     } catch (error) {

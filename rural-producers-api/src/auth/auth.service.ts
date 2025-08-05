@@ -43,7 +43,7 @@ export class AuthService {
   }
 
   async register(registerDto: RegisterDto): Promise<AuthResponseDto> {
-    // Verificar se o usuário já existe
+
     const existingUser = await this.userRepository.findOne({
       where: { username: registerDto.username },
     })
@@ -51,10 +51,10 @@ export class AuthService {
       throw new ConflictException('Nome de usuário já existe')
     }
 
-    // Hash da senha
+
     const hashedPassword = await bcrypt.hash(registerDto.password, 10)
 
-    // Criar novo usuário
+
     const user = this.userRepository.create({
       username: registerDto.username,
       password: hashedPassword,
@@ -63,7 +63,7 @@ export class AuthService {
 
     const savedUser = await this.userRepository.save(user)
 
-    // Gerar token
+
     const payload = { username: savedUser.username, sub: savedUser.id }
     return {
       accessToken: this.jwtService.sign(payload),
