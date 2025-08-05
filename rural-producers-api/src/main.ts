@@ -18,9 +18,10 @@ async function bootstrap() {
   })
 
   app.enableCors({
-    origin: ['*'],
+    origin: 'https://rural-producers-api2-h9d890w7r-felipes-projects-71ad424d.vercel.app',
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    credentials: true,
   })
 
   app.useGlobalPipes(
