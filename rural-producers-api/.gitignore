@@ -48,8 +48,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 /pgdata
 
-/client/node_modules
-/client/dist
+
 
 .DS_STORE
 node_modules

@@ -1,4 +1,4 @@
-# 🌾 Rural Producer API
+# 🌾 Sistema de Gestão de Produtores Rurais
 
 [![NestJS](https://img.shields.io/badge/NestJS-11.0.1-red.svg)](https://nestjs.com/)
 [![React](https://img.shields.io/badge/React-19.1.0-blue.svg)](https://reactjs.org/)
@@ -120,24 +120,22 @@ docker-compose up --build
 ### Estrutura do Projeto
 
 ```
-rural-producer-api/
-├── 📁 rural-producers-api/     # Backend - NestJS
-│   ├── 📁 src/                # Código fonte do backend
-│   ├── 📁 test/               # Testes automatizados
-│   └── 📄 README.md           # Documentação do backend
+rural-producers-api/
+├── 📁 src/                    # Backend - NestJS
+│   ├── 🔐 auth/              # Sistema de autenticação
+│   ├── 👥 producers/         # Módulo de produtores
+│   ├── 🏡 farms/            # Módulo de fazendas
+│   ├── 🌱 culture/          # Módulo de culturas
+│   ├── 📊 planted-crops/    # Módulo de safras
+│   ├── 📈 dashboard/        # Módulo do dashboard
+│   └── 🔧 common/           # Utilitários compartilhados
 │
-├── 📁 rural-producers-frontend/ # Frontend - React
-│   ├── 📁 src/                # Código fonte do frontend
-│   ├── 📁 public/             # Arquivos estáticos
-│   └── 📄 README.md           # Documentação do frontend
-│
-├── 🐳 docker-compose.yml      # Configuração Docker
-├── 📄 README.md              # Documentação principal
-├── 📄 CONTRIBUTING.md        # Guia de contribuição
-├── 📄 CODE_OF_CONDUCT.md     # Código de conduta
-├── 📄 LICENSE                # Licença do projeto
-└── 📄 .env.example           # Exemplo de variáveis de ambiente
+├── 📁 test/                  # Testes automatizados
+├── 🐳 docker-compose.yml     # Configuração Docker
+└── 📄 README.md             # Documentação
 ```
+
+**Frontend separado em:** `../rural-producers-frontend/`
 
 ### Padrões de Código
 
@@ -199,25 +197,26 @@ Acesse a documentação completa da API em:
 ### Executando Testes
 
 ```bash
-# Backend - Testes unitários
-cd rural-producers-api
+# Testes unitários
 npm run test
 
-# Backend - Testes em modo watch
+# Testes em modo watch
 npm run test:watch
 
-# Backend - Testes end-to-end
+# Testes end-to-end
 npm run test:e2e
 
-# Frontend - Testes
-cd rural-producers-frontend
-npm run test
+# Cobertura de testes
+npm run test:cov
+
+# Testes de debug
+npm run test:debug
 ```
 
 ### Estrutura de Testes
 
 ```
-rural-producers-api/test/
+test/
 ├── 📁 helpers/              # Utilitários de teste
 ├── 🧪 app.e2e-spec.ts       # Testes da aplicação
 ├── 🧪 producer.e2e-spec.ts  # Testes de produtores
