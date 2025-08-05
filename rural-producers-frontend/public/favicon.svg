@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Fundo circular com gradiente verde -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4CAF50;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2E7D32;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="plantGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8BC34A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#689F38;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="codeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2196F3;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1976D2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+
+  <!-- Círculo de fundo -->
+  <circle cx="32" cy="32" r="30" fill="url(#bgGradient)" stroke="#1B5E20" stroke-width="2"/>
+
+  <!-- Terra/Chão -->
+  <ellipse cx="32" cy="45" rx="25" ry="8" fill="#8D6E63" opacity="0.8"/>
+
+  <!-- Plantas crescendo -->
+  <g fill="url(#plantGradient)">
+    <!-- Planta 1 -->
+    <path d="M 20 45 Q 20 35 18 25 Q 18 20 20 15 Q 22 20 20 25 Q 22 35 20 45" stroke="#4CAF50" stroke-width="1" fill="none"/>
+    <ellipse cx="18" cy="15" rx="2" ry="3" fill="url(#plantGradient)"/>
+
+    <!-- Planta 2 -->
+    <path d="M 32 45 Q 32 35 30 25 Q 30 20 32 15 Q 34 20 32 25 Q 34 35 32 45" stroke="#4CAF50" stroke-width="1" fill="none"/>
+    <ellipse cx="30" cy="15" rx="2" ry="3" fill="url(#plantGradient)"/>
+
+    <!-- Planta 3 -->
+    <path d="M 44 45 Q 44 35 42 25 Q 42 20 44 15 Q 46 20 44 25 Q 46 35 44 45" stroke="#4CAF50" stroke-width="1" fill="none"/>
+    <ellipse cx="42" cy="15" rx="2" ry="3" fill="url(#plantGradient)"/>
+  </g>
+
+  <!-- Símbolo de API/Código -->
+  <g fill="url(#codeGradient)" opacity="0.9">
+    <!-- Chaves de API -->
+    <rect x="15" y="8" width="3" height="8" rx="1"/>
+    <rect x="18" y="8" width="2" height="8" rx="1"/>
+    <rect x="22" y="8" width="3" height="8" rx="1"/>
+
+    <rect x="27" y="8" width="3" height="8" rx="1"/>
+    <rect x="30" y="8" width="2" height="8" rx="1"/>
+    <rect x="34" y="8" width="3" height="8" rx="1"/>
+
+    <rect x="39" y="8" width="3" height="8" rx="1"/>
+    <rect x="42" y="8" width="2" height="8" rx="1"/>
+    <rect x="46" y="8" width="3" height="8" rx="1"/>
+  </g>
+
+  <!-- Linhas de conexão/API -->
+  <g stroke="#2196F3" stroke-width="1" opacity="0.7">
+    <line x1="16.5" y1="12" x2="28.5" y2="12"/>
+    <line x1="40.5" y1="12" x2="47.5" y2="12"/>
+  </g>
+
+  <!-- Pontos de dados -->
+  <circle cx="16.5" cy="12" r="1.5" fill="#2196F3"/>
+  <circle cx="28.5" cy="12" r="1.5" fill="#2196F3"/>
+  <circle cx="40.5" cy="12" r="1.5" fill="#2196F3"/>
+  <circle cx="47.5" cy="12" r="1.5" fill="#2196F3"/>
+</svg>
