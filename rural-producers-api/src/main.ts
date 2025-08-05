@@ -17,8 +17,16 @@ async function bootstrap() {
     exclude: ['healthcheck'],
   })
 
+  const vercelRegex = /^https:\/\/rural-producers-api2-.*-felipes-projects-71ad424d\.vercel\.app$/
+
   app.enableCors({
-    origin: 'https://rural-producers-api2-h9d890w7r-felipes-projects-71ad424d.vercel.app',
+    origin: (origin, callback) => {
+      if (!origin || vercelRegex.test(origin)) {
+        callback(null, true)
+      } else {
+        callback(new Error('Not allowed by CORS'))
+      }
+    },
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     credentials: true,
