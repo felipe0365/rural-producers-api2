@@ -4,6 +4,7 @@ import { AppModule } from './app.module'
 import { HttpExceptionFilter } from './common/filters/http-exception.filter'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import * as crypto from 'crypto'
+import { env } from 'process'
 
 if (!global.crypto) {
   global.crypto = crypto as any
@@ -17,7 +18,7 @@ async function bootstrap() {
   })
 
   app.enableCors({
-    origin: '*',
+    origin: ['*'],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
   })
