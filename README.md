@@ -23,10 +23,12 @@
 
 ### 🔐 Sistema de Autenticação
 
--   **Login/Registro** com validação robusta
--   **JWT Authentication** com refresh tokens
+-   **Login único** para acesso ao sistema administrativo
+-   **JWT Authentication** com refresh tokens para segurança
 -   **Proteção de rotas** e middleware de segurança
 -   **Logout automático** e limpeza de sessão
+-   **Acesso centralizado** - todos os usuários acessam os mesmos dados do sistema
+-   **Não há contas individuais** - o sistema gerencia dados de produtores rurais de forma centralizada
 
 ### 📊 Dashboard Inteligente
 
@@ -150,15 +152,24 @@ rural-producer-api/
 
 ## 📚 Documentação da API
 
-### Endpoints Principais
+### 🔐 Sistema de Autenticação
 
-#### Autenticação
+O sistema utiliza um **modelo de autenticação centralizado** onde:
+
+-   **Um único login** garante acesso ao sistema administrativo completo
+-   **Não há contas individuais** para produtores ou usuários específicos
+-   **Todos os dados** são gerenciados de forma centralizada
+-   **O sistema é focado** na gestão de produtores rurais, não em contas de usuários
+
+#### Endpoints de Autenticação
 
 ```http
-POST /api/auth/login          # Login de usuário
-POST /api/auth/register       # Registro de usuário
-GET  /api/auth/profile        # Perfil do usuário
+POST /api/auth/login          # Login único para acesso ao sistema
+POST /api/auth/register       # Registro de novo usuário administrador (se necessário)
+GET  /api/auth/profile        # Perfil do usuário logado
 ```
+
+### Endpoints Principais
 
 #### Produtores
 
