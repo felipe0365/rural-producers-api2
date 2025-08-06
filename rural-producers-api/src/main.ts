@@ -15,12 +15,17 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api')
 
-  app.enableCors({
-    origin: ['https://rural-producers-api2.vercel.app'],
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
-  })
+  const vercelRegex = /^https:\/\/rural-producers-api2-.*-felipes-projects-71ad424d\.vercel\.app$/
 
+  app.enableCors({
+    origin: (origin, callback) => {
+      if (!origin || vercelRegex.test(origin)) {
+        callback(null, true)
+      } else {
+        callback(new Error('Not allowed by CORS'))
+      }
+    },
+  })
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
