@@ -11,51 +11,51 @@
 
 ## 📋 Índice
 
-- [✨ Funcionalidades](#-funcionalidades)
-- [🛠️ Stack Tecnológica](#️-stack-tecnológica)
-- [🚀 Quick Start](#-quick-start)
-- [📚 Documentação da API](#-documentação-da-api)
-- [🧪 Testes](#-testes)
-- [📊 Estrutura do Projeto](#-estrutura-do-projeto)
-- [📄 Licença](#-licença)
+-   [✨ Funcionalidades](#-funcionalidades)
+-   [🛠️ Stack Tecnológica](#️-stack-tecnológica)
+-   [🚀 Quick Start](#-quick-start)
+-   [📚 Documentação da API](#-documentação-da-api)
+-   [🧪 Testes](#-testes)
+-   [📊 Estrutura do Projeto](#-estrutura-do-projeto)
+-   [📄 Licença](#-licença)
 
 ## ✨ Funcionalidades
 
 ### 🔐 Sistema de Autenticação
 
-- **Login/Registro** com validação robusta
-- **JWT Authentication** com refresh tokens
-- **Proteção de rotas** e middleware de segurança
-- **Logout automático** e limpeza de sessão
+-   **Login/Registro** com validação robusta
+-   **JWT Authentication** com refresh tokens
+-   **Proteção de rotas** e middleware de segurança
+-   **Logout automático** e limpeza de sessão
 
 ### 📊 Dashboard Inteligente
 
-- **Estatísticas em tempo real** de produtores e fazendas
-- **Gráficos interativos** com distribuição por estado e cultura
-- **Métricas de uso do solo** e produtividade
-- **Indicadores de performance** agrícola
+-   **Estatísticas em tempo real** de produtores e fazendas
+-   **Gráficos interativos** com distribuição por estado e cultura
+-   **Métricas de uso do solo** e produtividade
+-   **Indicadores de performance** agrícola
 
 ### 👥 Gestão de Produtores
 
-- **Cadastro completo** com validação de CPF/CNPJ
-- **Gestão de múltiplas fazendas** por produtor
-- **Controle de culturas** e safras plantadas
-- **Busca avançada** com filtros dinâmicos
-- **Validação de áreas** e dados geográficos
+-   **Cadastro completo** com validação de CPF/CNPJ
+-   **Gestão de múltiplas fazendas** por produtor
+-   **Controle de culturas** e safras plantadas
+-   **Busca avançada** com filtros dinâmicos
+-   **Validação de áreas** e dados geográficos
 
 ### 🏡 Gestão de Fazendas
 
-- **Cadastro de propriedades** com dados completos
-- **Controle de área total** e área plantada
-- **Mapeamento de culturas** por fazenda
-- **Histórico de safras** e produtividade
+-   **Cadastro de propriedades** com dados completos
+-   **Controle de área total** e área plantada
+-   **Mapeamento de culturas** por fazenda
+-   **Histórico de safras** e produtividade
 
 ### 🌱 Gestão de Culturas
 
-- **Catálogo de culturas** disponíveis
-- **Controle de safras** plantadas
-- **Métricas de produção** por cultura
-- **Análise de distribuição** geográfica
+-   **Catálogo de culturas** disponíveis
+-   **Controle de safras** plantadas
+-   **Métricas de produção** por cultura
+-   **Análise de distribuição** geográfica
 
 ## 🛠️ Stack Tecnológica
 
@@ -87,11 +87,11 @@
 
 ### DevOps & Ferramentas
 
-- **Docker & Docker Compose** - Containerização
-- **ESLint & Prettier** - Linting e formatação
-- **Jest** - Testes automatizados
-- **Vite** - Build tool para frontend
-- **Nginx** - Servidor web para produção
+-   **Docker & Docker Compose** - Containerização
+-   **ESLint & Prettier** - Linting e formatação
+-   **Jest** - Testes automatizados
+-   **Vite** - Build tool para frontend
+-   **Nginx** - Servidor web para produção
 
 ## 🚀 Quick Start
 
@@ -109,11 +109,11 @@ cp .env.example .env
 docker-compose up --build
 ```
 
-### Serviços Disponíveis
+### 🌐 Produção
 
-- **Frontend**: http://localhost:3001
-- **Backend API**: http://localhost:3000
-- **Documentação Swagger**: http://localhost:3000/api/docs
+O projeto está disponível em produção através da plataforma Vercel:
+
+-   **URL Principal**: https://rural-producers-api2.vercel.app/
 
 ## 🔧 Desenvolvimento
 
@@ -141,12 +141,12 @@ rural-producer-api/
 
 ### Padrões de Código
 
-- **TypeScript** para tipagem estática
-- **ESLint + Prettier** para formatação
-- **Conventional Commits** para mensagens
-- **Modular Architecture** com NestJS
-- **Component-Based** com React
-- **RESTful APIs** com documentação Swagger
+-   **TypeScript** para tipagem estática
+-   **ESLint + Prettier** para formatação
+-   **Conventional Commits** para mensagens
+-   **Modular Architecture** com NestJS
+-   **Component-Based** com React
+-   **RESTful APIs** com documentação Swagger
 
 ## 📚 Documentação da API
 
@@ -191,8 +191,8 @@ GET /api/dashboard/charts     # Dados para gráficos
 
 Acesse a documentação completa da API em:
 
-- **Swagger UI**: http://localhost:3000/api/docs
-- **OpenAPI JSON**: http://localhost:3000/api/docs-json
+-   **Swagger UI**: http://localhost:3000/api/docs
+-   **OpenAPI JSON**: http://localhost:3000/api/docs-json
 
 ## 🧪 Testes
 
@@ -231,7 +231,7 @@ Este projeto está licenciado sob a **MIT License** - veja o arquivo [LICENSE](L
 
 ## 📞 Suporte
 
-- **Email**: felipe0365@gmail.com
+-   **Email**: felipe0365@gmail.com
 
 ---
 
