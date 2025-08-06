@@ -13,9 +13,7 @@ if (!global.crypto) {
 async function bootstrap() {
   const app = await NestFactory.create(AppModule)
 
-  app.setGlobalPrefix('api', {
-    exclude: ['healthcheck'],
-  })
+  app.setGlobalPrefix('api')
 
   app.enableCors({
     origin: ['https://rural-producers-api2.vercel.app'],
